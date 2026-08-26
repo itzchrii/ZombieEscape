@@ -9,7 +9,7 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; user-select: none; }
     body, html { width: 100%; height: 100%; overflow: hidden; background: #000; color: #fff; }
     
-    /* SCHERMATA MENU (PRIORITÀ ASSOLUTA Z-INDEX 99999) */
+    /* MENU DI CONFIGURAZIONE */
     #setup-menu {
       position: fixed;
       top: 0; left: 0;
@@ -57,7 +57,7 @@
       box-shadow: 0 0 20px rgba(0, 255, 102, 0.4);
     }
 
-    /* MAPPA E HUD */
+    /* MAPPA E INTERFACCIA HUD */
     #map { width: 100vw; height: 100vh; position: absolute; top:0; left:0; z-index: 1; background: #111; }
     
     .hud { position: absolute; top:0; left:0; z-index: 100; pointer-events: none; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between; padding: 15px; }
@@ -66,25 +66,26 @@
     .lives { color: #ff4757; font-size: 20px; letter-spacing: 2px; font-weight: bold; }
     .hud-center { text-align: center; background: rgba(0,0,0,0.9); padding: 6px 14px; border-radius: 10px; border: 1px solid #333; }
 
-    .hud-bottom { display: flex; justify-content: space-between; width: 100%; pointer-events: auto; }
-    .metric-card { background: rgba(15, 23, 42, 0.95); border: 1px solid #333; padding: 8px 12px; border-radius: 10px; min-width: 90px; text-align: center; }
+    .hud-bottom { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 100%; pointer-events: auto; }
+    .metric-card { background: rgba(15, 23, 42, 0.95); border: 1px solid #333; padding: 8px 6px; border-radius: 10px; text-align: center; }
     .metric-value { font-size: 18px; font-weight: bold; color: #00FF66; }
-    .metric-label { font-size: 10px; color: #aaa; text-transform: uppercase; }
+    .metric-label { font-size: 9px; color: #aaa; text-transform: uppercase; margin-top: 2px; }
 
-    .dev-controls { position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); z-index: 110; display: grid; grid-template-columns: repeat(3, 44px); gap: 4px; background: rgba(0,0,0,0.9); padding: 6px; border-radius: 10px; pointer-events: auto; }
+    .dev-controls { position: absolute; bottom: 85px; left: 50%; transform: translateX(-50%); z-index: 110; display: grid; grid-template-columns: repeat(3, 44px); gap: 4px; background: rgba(0,0,0,0.9); padding: 6px; border-radius: 10px; pointer-events: auto; }
     .dev-btn { background: #222; color: #00FF66; border: 1px solid #00FF66; width: 44px; height: 44px; border-radius: 8px; font-weight: bold; font-size: 18px; cursor: pointer; }
 
-    /* ICONE MARKER */
-    .player-icon { width: 18px; height: 18px; background: #00FF66; border: 2px solid #fff; border-radius: 50%; box-shadow: 0 0 12px #00FF66; }
-    .z-walker { width: 16px; height: 16px; background: #ff4757; border: 2px solid #000; border-radius: 50%; }
-    .z-runner { width: 14px; height: 14px; background: #ffa502; border: 2px solid #000; border-radius: 50%; }
-    .z-tank { width: 22px; height: 22px; background: #a55eea; border: 2px solid #000; border-radius: 50%; }
-    .crate-icon { width: 16px; height: 16px; background: #ffd32a; border: 2px solid #000; border-radius: 3px; }
+    /* STILI ICONE ED EVITAMENTO BUG ZOOM */
+    .leaflet-marker-icon { overflow: visible !important; }
+    .player-icon { width: 20px; height: 20px; background: #00FF66; border: 3px solid #fff; border-radius: 50%; box-shadow: 0 0 14px #00FF66; }
+    .z-walker { width: 16px; height: 16px; background: #ff4757; border: 2px solid #000; border-radius: 50%; box-shadow: 0 0 8px #ff4757; }
+    .z-runner { width: 14px; height: 14px; background: #ffa502; border: 2px solid #000; border-radius: 50%; box-shadow: 0 0 8px #ffa502; }
+    .z-tank { width: 22px; height: 22px; background: #a55eea; border: 2px solid #000; border-radius: 50%; box-shadow: 0 0 10px #a55eea; }
+    .crate-icon { width: 16px; height: 16px; background: #ffd32a; border: 2px solid #000; border-radius: 3px; box-shadow: 0 0 10px #ffd32a; }
   </style>
 </head>
 <body>
 
-  <!-- MENU DI CONFIGURAZIONE -->
+  <!-- MENU INIZIALE -->
   <div id="setup-menu">
     <div class="title">ZOMBIE ESCAPE</div>
     <div class="subtitle">Imposta la tua partita survival</div>
@@ -113,7 +114,7 @@
     <button class="start-btn" onclick="launchGame()">AVVIA PARTITA</button>
   </div>
 
-  <!-- INTERFACCIA GIOCO (HUD) -->
+  <!-- INTERFACCIA HUD -->
   <div class="hud">
     <div class="hud-top">
       <div class="stats-box">
@@ -134,10 +135,15 @@
       <button class="dev-btn" onclick="moveSim(0, 0.00015)">►</button>
     </div>
 
+    <!-- TACHIMETRO E METRICHE -->
     <div class="hud-bottom">
       <div class="metric-card">
         <div id="threat-dist" class="metric-value" style="color:#ff4757;">--</div>
         <div class="metric-label">Minaccia</div>
+      </div>
+      <div class="metric-card">
+        <div id="speed-val" class="metric-value" style="color:#ffbb00;">0</div>
+        <div class="metric-label">KM/H</div>
       </div>
       <div class="metric-card">
         <div id="horde-size" class="metric-value" style="color:#00E5FF;">0</div>
@@ -156,10 +162,9 @@
     let lives = 3, maxLives = 3, score = 0, timeSurvived = 0, wave = 1;
     let gameInterval, waveInterval, crateInterval;
     let isGameOver = false;
+    let speedTimeout;
 
-    // Impostazioni scelte dal menu
     let config = { diff: 'easy', lives: 3, count: 4 };
-
     const diffSpeeds = { easy: 0.6, medium: 1.0, hard: 1.5 };
 
     function selectOpt(btn, category, value) {
@@ -172,7 +177,8 @@
       map = L.map('map', { zoomControl: false, attributionControl: false }).setView(playerPos, 17);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
-      const playerIcon = L.divIcon({ className: 'player-icon', html: '', iconSize: [18, 18] });
+      // Icona Giocatore con ancora centrata
+      const playerIcon = L.divIcon({ className: 'player-icon', html: '', iconSize: [20, 20], iconAnchor: [10, 10] });
       playerMarker = L.marker(playerPos, { icon: playerIcon }).addTo(map);
     }
 
@@ -180,11 +186,11 @@
       let radius = 0.002;
       let zPos = [playerPos[0] + (Math.random() - 0.5) * radius, playerPos[1] + (Math.random() - 0.5) * radius];
 
-      let cssClass = 'z-walker', speed = 0.025, dmg = 1;
-      if(type === 'runner') { cssClass = 'z-runner'; speed = 0.045; }
-      if(type === 'tank') { cssClass = 'z-tank'; speed = 0.012; dmg = 2; }
+      let cssClass = 'z-walker', speed = 0.025, dmg = 1, size = 16;
+      if(type === 'runner') { cssClass = 'z-runner'; speed = 0.045; size = 14; }
+      if(type === 'tank') { cssClass = 'z-tank'; speed = 0.012; dmg = 2; size = 22; }
 
-      const zIcon = L.divIcon({ className: cssClass, html: '', iconSize: [16, 16] });
+      const zIcon = L.divIcon({ className: cssClass, html: '', iconSize: [size, size], iconAnchor: [size/2, size/2] });
       let marker = L.marker(zPos, { icon: zIcon }).addTo(map);
 
       zombies.push({ marker: marker, pos: zPos, speed: speed * diffSpeeds[config.diff], damage: dmg });
@@ -193,7 +199,7 @@
 
     function spawnCrate() {
       let cPos = [playerPos[0] + (Math.random() - 0.5) * 0.002, playerPos[1] + (Math.random() - 0.5) * 0.002];
-      const cIcon = L.divIcon({ className: 'crate-icon', html: '', iconSize: [16, 16] });
+      const cIcon = L.divIcon({ className: 'crate-icon', html: '', iconSize: [16, 16], iconAnchor: [8, 8] });
       let marker = L.marker(cPos, { icon: cIcon }).addTo(map);
       crates.push({ marker: marker, pos: cPos });
     }
@@ -261,10 +267,8 @@
       maxLives = config.lives;
       updateLivesUI();
 
-      // Nascondi menu
       document.getElementById('setup-menu').style.display = 'none';
 
-      // Ricalcola la mappa
       setTimeout(() => { map.invalidateSize(); }, 100);
 
       if (navigator.geolocation) {
@@ -274,14 +278,20 @@
             playerPos = [pos.coords.latitude, pos.coords.longitude];
             playerMarker.setLatLng(playerPos);
             map.panTo(playerPos);
+            
+            // Misurazione velocità GPS reale in km/h
+            let currentSpeed = 0;
+            if (pos.coords.speed !== null && pos.coords.speed !== undefined && !isNaN(pos.coords.speed)) {
+              currentSpeed = Math.round(pos.coords.speed * 3.6);
+            }
+            document.getElementById('speed-val').innerText = currentSpeed;
             document.getElementById('dev-panel').style.display = 'none';
           },
-          (err) => console.log("Simulatore GPS attivo"),
+          (err) => console.log("Simulatore attivo"),
           { enableHighAccuracy: true }
         );
       }
 
-      // Spawna zombie scelti dal menu
       for(let i = 0; i < config.count; i++) spawnZombie('walker');
       spawnCrate();
 
@@ -301,6 +311,13 @@
       playerPos[1] += lng;
       playerMarker.setLatLng(playerPos);
       map.panTo(playerPos);
+
+      // Simulazione velocità per test a casa (~14 km/h)
+      document.getElementById('speed-val').innerText = "14";
+      clearTimeout(speedTimeout);
+      speedTimeout = setTimeout(() => {
+        document.getElementById('speed-val').innerText = "0";
+      }, 1200);
     }
 
     window.onload = initMap;
