@@ -320,6 +320,7 @@
 
     let config = { diff: 'EASY', exits: 1, lives: 3, count: 6 };
     
+    // DISTANZE PRECISE: 250m, 500m, 800m
     const exitDistances = { EASY: 250, MEDIUM: 500, HARDCORE: 800 };
 
     function getZombieSpeed(type) {
@@ -443,7 +444,6 @@
       crates.push({ marker: marker, pos: cPos });
     }
 
-    // CALCOLO VETTORIALE PRECISO DELL'USCITA SU 360 GRADI
     function setupExits() {
       let targetMeters = exitDistances[config.diff];
       let randomBaseAngle = Math.random() * Math.PI * 2;
@@ -453,7 +453,6 @@
       for (let i = 0; i < config.exits; i++) {
         let angleRad = angles[i];
         
-        // Calcolo preciso offset in metri convertito in coordinate geografiche
         let dy = targetMeters * Math.cos(angleRad);
         let dx = targetMeters * Math.sin(angleRad);
 
