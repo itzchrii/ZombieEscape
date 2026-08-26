@@ -7,87 +7,83 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; user-select: none; }
-    body, html { width: 100%; height: 100%; overflow: hidden; background: #050505; color: #fff; }
+    body, html { width: 100%; height: 100%; overflow: hidden; background: #111; color: #fff; }
     
-    /* MAPPA STABILE */
-    #map { width: 100%; height: 100%; z-index: 1; filter: invert(90%) hue-rotate(180deg) brightness(0.7) contrast(1.5); }
+    /* MAPPA SENZA FILTRI DANNOSI */
+    #map { width: 100vw; height: 100vh; z-index: 1; background: #222; }
     
     /* HUD OVERLAY */
-    .hud { position: absolute; z-index: 10; pointer-events: none; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between; padding: 15px; }
+    .hud { position: absolute; top:0; left:0; z-index: 10; pointer-events: none; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between; padding: 15px; }
     .hud-top { display: flex; justify-content: space-between; align-items: flex-start; width: 100%; }
     
-    .stats-box { background: rgba(10, 10, 10, 0.9); padding: 8px 14px; border-radius: 12px; font-size: 14px; border: 1px solid #00FF66; box-shadow: 0 0 10px rgba(0,255,102,0.2); }
-    .lives { color: #ff4757; font-size: 20px; letter-spacing: 2px; font-weight: bold; }
-    .hud-center { text-align: center; background: rgba(10,10,10,0.9); padding: 6px 12px; border-radius: 10px; border: 1px solid #333; }
+    .stats-box { background: rgba(0, 0, 0, 0.85); padding: 8px 12px; border-radius: 10px; font-size: 14px; border: 1px solid #00FF66; }
+    .lives { color: #ff4757; font-size: 18px; letter-spacing: 2px; font-weight: bold; }
+    .hud-center { text-align: center; background: rgba(0,0,0,0.85); padding: 6px 12px; border-radius: 10px; border: 1px solid #444; }
 
     .hud-bottom { display: flex; justify-content: space-between; align-items: flex-end; width: 100%; pointer-events: auto; }
-    .metric-card { background: rgba(15, 23, 42, 0.95); border: 1px solid #333; padding: 10px 14px; border-radius: 12px; min-width: 100px; text-align: center; }
-    .metric-value { font-size: 20px; font-weight: bold; color: #00FF66; }
-    .metric-label { font-size: 10px; color: #aaa; text-transform: uppercase; margin-top: 2px; }
+    .metric-card { background: rgba(15, 23, 42, 0.9); border: 1px solid #444; padding: 10px; border-radius: 10px; min-width: 90px; text-align: center; }
+    .metric-value { font-size: 18px; font-weight: bold; color: #00FF66; }
+    .metric-label { font-size: 10px; color: #aaa; text-transform: uppercase; }
 
-    /* CONTROLLI TEST IN CASA */
-    .dev-controls { position: absolute; bottom: 85px; left: 50%; transform: translateX(-50%); z-index: 20; display: grid; grid-template-columns: repeat(3, 45px); gap: 5px; background: rgba(0,0,0,0.9); padding: 8px; border-radius: 15px; pointer-events: auto; border: 1px solid #444; }
-    .dev-btn { background: #222; color: #00FF66; border: 1px solid #00FF66; width: 45px; height: 45px; border-radius: 10px; font-weight: bold; font-size: 18px; cursor: pointer; }
-    .dev-btn:active { background: #00FF66; color: #000; }
+    /* SIMULATORE TEST */
+    .dev-controls { position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); z-index: 20; display: grid; grid-template-columns: repeat(3, 42px); gap: 4px; background: rgba(0,0,0,0.9); padding: 6px; border-radius: 10px; pointer-events: auto; }
+    .dev-btn { background: #333; color: #00FF66; border: 1px solid #00FF66; width: 42px; height: 42px; border-radius: 6px; font-weight: bold; font-size: 16px; cursor: pointer; }
 
-    /* MENU PRINCIPALE */
-    .modal { position: fixed; inset: 0; background: rgba(5, 5, 5, 0.98); z-index: 100; display: flex; flex-direction: column; padding: 25px; justify-content: center; align-items: center; text-align: center; }
-    .btn-main { background: #00FF66; color: #000; font-weight: bold; font-size: 18px; padding: 16px; border: none; border-radius: 12px; width: 100%; margin-top: 20px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 0 15px rgba(0,255,102,0.4); }
-    .diff-selector { display: flex; gap: 10px; width: 100%; margin: 15px 0; }
-    .diff-btn { flex: 1; padding: 12px; background: #151515; border: 1px solid #333; color: #fff; border-radius: 8px; font-weight: bold; cursor: pointer; }
-    .diff-btn.active { border-color: #00FF66; background: rgba(0,255,102,0.1); color: #00FF66; }
+    /* MENU INIZIALE */
+    .modal { position: fixed; inset: 0; background: #0a0a0a; z-index: 100; display: flex; flex-direction: column; padding: 20px; justify-content: center; align-items: center; text-align: center; }
+    .btn-main { background: #00FF66; color: #000; font-weight: bold; font-size: 18px; padding: 16px; border: none; border-radius: 10px; width: 100%; margin-top: 20px; cursor: pointer; }
+    .diff-selector { display: flex; gap: 8px; width: 100%; margin: 15px 0; }
+    .diff-btn { flex: 1; padding: 10px; background: #222; border: 1px solid #444; color: #fff; border-radius: 6px; font-weight: bold; cursor: pointer; }
+    .diff-btn.active { border-color: #00FF66; background: #00FF6622; color: #00FF66; }
 
-    /* ICONE SULLA MAPPA */
-    .player-icon { width: 20px; height: 20px; background: #00FF66; border: 3px solid #fff; border-radius: 50%; box-shadow: 0 0 15px #00FF66; }
-    .z-walker { width: 16px; height: 16px; background: #ff4757; border: 2px solid #000; border-radius: 50%; box-shadow: 0 0 10px #ff4757; }
-    .z-runner { width: 14px; height: 14px; background: #ffa502; border: 2px solid #000; border-radius: 50%; box-shadow: 0 0 10px #ffa502; }
-    .z-tank { width: 24px; height: 24px; background: #a55eea; border: 2px solid #000; border-radius: 50%; box-shadow: 0 0 12px #a55eea; }
-    .crate-icon { width: 18px; height: 18px; background: #ffd32a; border: 2px solid #000; border-radius: 4px; box-shadow: 0 0 12px #ffd32a; }
+    /* MARKERS */
+    .player-icon { width: 18px; height: 18px; background: #00FF66; border: 2px solid #fff; border-radius: 50%; box-shadow: 0 0 10px #00FF66; }
+    .z-walker { width: 16px; height: 16px; background: #ff4757; border: 2px solid #000; border-radius: 50%; }
+    .z-runner { width: 14px; height: 14px; background: #ffa502; border: 2px solid #000; border-radius: 50%; }
+    .z-tank { width: 22px; height: 22px; background: #a55eea; border: 2px solid #000; border-radius: 50%; }
+    .crate-icon { width: 16px; height: 16px; background: #ffd32a; border: 2px solid #000; border-radius: 3px; }
   </style>
 </head>
 <body>
 
-  <!-- MENU INIZIALE -->
+  <!-- SCHERMATA MENU -->
   <div id="home-screen" class="modal">
-    <h1 style="color:#00FF66; font-size: 32px; margin-bottom: 5px;">ZOMBIE ESCAPE</h1>
-    <p style="color:#888; font-size:14px; margin-bottom: 25px;">GPS Real-Time Survival</p>
+    <h1 style="color:#00FF66; font-size: 28px;">ZOMBIE ESCAPE</h1>
+    <p style="color:#888; font-size:13px; margin-bottom: 20px;">Real-World Survival</p>
     
-    <div style="width:100%; text-align:left; font-size:13px; color:#ccc; margin-bottom:10px;">SELEZIONA DIFFICOLTÀ:</div>
+    <div style="width:100%; text-align:left; font-size:12px; color:#aaa;">DIFFICOLTÀ:</div>
     <div class="diff-selector">
       <button class="diff-btn active" onclick="setDiff('easy', this)">FACILE</button>
       <button class="diff-btn" onclick="setDiff('medium', this)">MEDIA</button>
       <button class="diff-btn" onclick="setDiff('hard', this)">HARDCORE</button>
     </div>
 
-    <div style="background:#111; padding:15px; border-radius:10px; border:1px solid #222; text-align:left; font-size:12px; color:#aaa; line-height:1.6; width:100%;">
-      🔴 <b>Walker</b>: Inseguitore classico.<br>
-      🟠 <b>Runner</b>: Veloce e imprevedibile.<br>
-      🟣 <b>Tank</b>: Lento ma ti toglie 2 vite.<br>
-      🟡 <b>Cassa Supply</b>: Corri sopra per curarti/punti.
+    <div style="background:#151515; padding:12px; border-radius:8px; text-align:left; font-size:12px; color:#ccc; line-height:1.5; width:100%;">
+      🔴 <b>Walker</b>: Inseguitore diretto<br>
+      🟠 <b>Runner</b>: Veloce<br>
+      🟣 <b>Tank</b>: Lento ma infligge 2 danni<br>
+      🟡 <b>Cassa</b>: Recupera vita/punti
     </div>
 
-    <button class="btn-main" onclick="startGame()">AVVIA SOPRAVVIVENZA</button>
+    <button class="btn-main" onclick="startGame()">AVVIA GIOCO</button>
   </div>
 
-  <!-- HUD -->
+  <!-- HUD INTERFACCIA -->
   <div class="hud">
     <div class="hud-top">
       <div class="stats-box">
         <div id="lives-display" class="lives">♥♥♥</div>
-        <div id="wave-txt" style="font-size:10px; color:#aaa; text-transform:uppercase;">ONDATA 1</div>
+        <div id="wave-txt" style="font-size:10px; color:#aaa;">ONDATA 1</div>
       </div>
       
       <div class="hud-center">
-        <div id="timer" style="color:#00FF66; font-weight:bold; font-size:18px;">00:00</div>
-        <div id="score" style="font-size:11px; color:#aaa;">PUNTI: 0</div>
+        <div id="timer" style="color:#00FF66; font-weight:bold; font-size:16px;">00:00</div>
+        <div id="score" style="font-size:10px; color:#aaa;">PUNTI: 0</div>
       </div>
     </div>
 
-    <!-- CONTROLLI SIMULATORE FRECCE -->
     <div class="dev-controls" id="dev-panel">
-      <div></div>
-      <button class="dev-btn" onclick="moveSim(0.00015, 0)">▲</button>
-      <div></div>
+      <div></div><button class="dev-btn" onclick="moveSim(0.00015, 0)">▲</button><div></div>
       <button class="dev-btn" onclick="moveSim(0, -0.00015)">◄</button>
       <button class="dev-btn" onclick="moveSim(-0.00015, 0)">▼</button>
       <button class="dev-btn" onclick="moveSim(0, 0.00015)">►</button>
@@ -96,11 +92,11 @@
     <div class="hud-bottom">
       <div class="metric-card">
         <div id="threat-dist" class="metric-value" style="color:#ff4757;">--</div>
-        <div class="metric-label">Minaccia Più Vicina</div>
+        <div class="metric-label">Minaccia</div>
       </div>
       <div class="metric-card">
         <div id="horde-size" class="metric-value" style="color:#00E5FF;">0</div>
-        <div class="metric-label">Zombie Attivi</div>
+        <div class="metric-label">Zombie</div>
       </div>
     </div>
   </div>
@@ -111,20 +107,15 @@
   <script>
     let map, playerMarker;
     let playerPos = [45.4642, 9.1900];
-    let zombies = [];
-    let crates = [];
-    let lives = 3;
-    let score = 0;
-    let timeSurvived = 0;
-    let wave = 1;
+    let zombies = [], crates = [];
+    let lives = 3, score = 0, timeSurvived = 0, wave = 1;
     let gameInterval, waveInterval, crateInterval;
-    let isGameOver = false;
-    let selectedDiff = 'easy';
+    let isGameOver = false, selectedDiff = 'easy';
 
     const diffSettings = {
-      easy: { speedMult: 0.6, spawnRate: 3, waveTime: 40000 },
-      medium: { speedMult: 1.0, spawnRate: 4, waveTime: 30000 },
-      hard: { speedMult: 1.5, spawnRate: 6, waveTime: 20000 }
+      easy: { speedMult: 0.6, spawnRate: 2, waveTime: 35000 },
+      medium: { speedMult: 1.0, spawnRate: 3, waveTime: 25000 },
+      hard: { speedMult: 1.4, spawnRate: 5, waveTime: 18000 }
     };
 
     function setDiff(diff, btn) {
@@ -134,38 +125,36 @@
     }
 
     function initMap() {
-      // Usiamo OpenStreetMap standard filtrato in dark per zero errori di caricamento
       map = L.map('map', { zoomControl: false, attributionControl: false }).setView(playerPos, 17);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+      
+      // Mappa CARTO Dark garantita senza schermate nere
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        maxZoom: 19,
+        subdomains: 'abcd'
+      }).addTo(map);
 
-      const playerIcon = L.divIcon({ className: 'player-icon', html: '', iconSize: [20, 20] });
+      const playerIcon = L.divIcon({ className: 'player-icon', html: '', iconSize: [18, 18] });
       playerMarker = L.marker(playerPos, { icon: playerIcon }).addTo(map);
     }
 
     function spawnZombie(type) {
-      let radius = 0.0025;
-      let latOffset = (Math.random() - 0.5) * radius;
-      let lngOffset = (Math.random() - 0.5) * radius;
-      let zPos = [playerPos[0] + latOffset, playerPos[1] + lngOffset];
+      let radius = 0.002;
+      let zPos = [playerPos[0] + (Math.random() - 0.5) * radius, playerPos[1] + (Math.random() - 0.5) * radius];
 
-      let cssClass = 'z-walker';
-      let speed = 0.025;
-      let dmg = 1;
-
+      let cssClass = 'z-walker', speed = 0.025, dmg = 1;
       if(type === 'runner') { cssClass = 'z-runner'; speed = 0.045; }
       if(type === 'tank') { cssClass = 'z-tank'; speed = 0.012; dmg = 2; }
 
       const zIcon = L.divIcon({ className: cssClass, html: '', iconSize: [16, 16] });
       let marker = L.marker(zPos, { icon: zIcon }).addTo(map);
 
-      zombies.push({ marker: marker, pos: zPos, type: type, speed: speed * diffSettings[selectedDiff].speedMult, damage: dmg });
+      zombies.push({ marker: marker, pos: zPos, speed: speed * diffSettings[selectedDiff].speedMult, damage: dmg });
       document.getElementById('horde-size').innerText = zombies.length;
     }
 
     function spawnCrate() {
-      let radius = 0.002;
-      let cPos = [playerPos[0] + (Math.random() - 0.5) * radius, playerPos[1] + (Math.random() - 0.5) * radius];
-      const cIcon = L.divIcon({ className: 'crate-icon', html: '', iconSize: [18, 18] });
+      let cPos = [playerPos[0] + (Math.random() - 0.5) * 0.002, playerPos[1] + (Math.random() - 0.5) * 0.002];
+      const cIcon = L.divIcon({ className: 'crate-icon', html: '', iconSize: [16, 16] });
       let marker = L.marker(cPos, { icon: cIcon }).addTo(map);
       crates.push({ marker: marker, pos: cPos });
     }
@@ -174,13 +163,15 @@
       if (isGameOver) return;
 
       timeSurvived++;
-      updateTimerDisplay();
+      let min = String(Math.floor(timeSurvived / 60)).padStart(2, '0');
+      let sec = String(timeSurvived % 60).padStart(2, '0');
+      document.getElementById('timer').innerText = `${min}:${sec}`;
+      
       score += wave * 5;
       document.getElementById('score').innerText = `PUNTI: ${score}`;
 
       let closestDist = 9999;
 
-      // Aggiorna Zombie
       zombies.forEach((z) => {
         let dLat = playerPos[0] - z.pos[0];
         let dLng = playerPos[1] - z.pos[1];
@@ -192,110 +183,82 @@
         let dist = Math.hypot(dLat, dLng) * 111320;
         if (dist < closestDist) closestDist = dist;
 
-        if (dist < 12) {
-          takeDamage(z.damage);
-          z.pos = [playerPos[0] + (Math.random() - 0.5) * 0.004, playerPos[1] + (Math.random() - 0.5) * 0.004];
+        if (dist < 10) {
+          lives -= z.damage;
+          updateLives();
+          z.pos = [playerPos[0] + (Math.random() - 0.5) * 0.003, playerPos[1] + (Math.random() - 0.5) * 0.003];
         }
       });
 
-      // Aggiorna Casse Supply
       crates.forEach((c, index) => {
-        let dLat = playerPos[0] - c.pos[0];
-        let dLng = playerPos[1] - c.pos[1];
-        let dist = Math.hypot(dLat, dLng) * 111320;
-
-        if (dist < 15) {
+        let dist = Math.hypot(playerPos[0] - c.pos[0], playerPos[1] - c.pos[1]) * 111320;
+        if (dist < 12) {
           map.removeLayer(c.marker);
           crates.splice(index, 1);
           if (lives < 3) lives++;
-          score += 250;
-          updateLivesDisplay();
-          flashScreen('#00ff6633');
+          score += 200;
+          updateLives();
         }
       });
 
       document.getElementById('threat-dist').innerText = closestDist < 1000 ? Math.round(closestDist) + 'm' : '--';
     }
 
-    function takeDamage(amount) {
-      lives -= amount;
-      updateLivesDisplay();
-      flashScreen('#ff000044');
-      if (lives <= 0) gameOver();
-    }
-
-    function flashScreen(color) {
-      document.body.style.background = color;
-      setTimeout(() => document.body.style.background = '#050505', 200);
-    }
-
-    function nextWave() {
-      wave++;
-      document.getElementById('wave-txt').innerText = `ONDATA ${wave}`;
-      spawnZombie('walker');
-      spawnZombie('runner');
-      if (wave % 2 === 0) spawnZombie('tank');
-    }
-
-    function gameOver() {
-      isGameOver = true;
-      clearInterval(gameInterval);
-      clearInterval(waveInterval);
-      clearInterval(crateInterval);
-      alert(`☠️ SEI STATO DEVASTATO!\n\nTempo Sopravvivenza: ${document.getElementById('timer').innerText}\nPunteggio Finale: ${score}\nOndata Raggiunta: ${wave}`);
-      location.reload();
-    }
-
-    function updateTimerDisplay() {
-      let min = String(Math.floor(timeSurvived / 60)).padStart(2, '0');
-      let sec = String(timeSurvived % 60).padStart(2, '0');
-      document.getElementById('timer').innerText = `${min}:${sec}`;
-    }
-
-    function updateLivesDisplay() {
+    function updateLives() {
       let hearts = '';
       for (let i = 0; i < lives; i++) hearts += '♥';
       document.getElementById('lives-display').innerText = hearts || 'DEAD';
+      if (lives <= 0) {
+        isGameOver = true;
+        clearInterval(gameInterval);
+        alert(`GAME OVER!\nPunteggio: ${score}`);
+        location.reload();
+      }
     }
 
     function startGame() {
       document.getElementById('home-screen').style.display = 'none';
       isGameOver = false;
 
+      // FIX FONDAMENTALE PER MAPPA NERA: FORZA LEAFLET A RICALCOLARE LE DIMENSIONI
+      setTimeout(() => {
+        map.invalidateSize();
+      }, 100);
+
       if (navigator.geolocation) {
         navigator.geolocation.watchPosition(
           (pos) => {
             if(isGameOver) return;
             playerPos = [pos.coords.latitude, pos.coords.longitude];
-            updatePlayerLocation();
+            playerMarker.setLatLng(playerPos);
+            map.panTo(playerPos);
             document.getElementById('dev-panel').style.display = 'none';
           },
-          (err) => console.log("GPS simulatore attivo."),
+          (err) => console.log("Simulatore attivo."),
           { enableHighAccuracy: true }
         );
       }
 
-      // Spawns iniziali
       let count = diffSettings[selectedDiff].spawnRate;
       for(let i=0; i<count; i++) spawnZombie('walker');
-      spawnZombie('runner');
       spawnCrate();
 
       gameInterval = setInterval(updateGame, 1000);
-      waveInterval = setInterval(nextWave, diffSettings[selectedDiff].waveTime);
-      crateInterval = setInterval(spawnCrate, 25000);
-    }
-
-    function updatePlayerLocation() {
-      playerMarker.setLatLng(playerPos);
-      map.panTo(playerPos);
+      waveInterval = setInterval(() => {
+        wave++;
+        document.getElementById('wave-txt').innerText = `ONDATA ${wave}`;
+        spawnZombie('walker');
+        if(wave % 2 === 0) spawnZombie('runner');
+      }, diffSettings[selectedDiff].waveTime);
+      crateInterval = setInterval(spawnCrate, 30000);
     }
 
     function moveSim(lat, lng) {
       if(isGameOver) return;
       playerPos[0] += lat;
       playerPos[1] += lng;
-      updatePlayerLocation();
+      playerMarker.setLatLng(playerPos);
+      map.panTo(playerPos);
     }
 
     window.onload = initMap;
