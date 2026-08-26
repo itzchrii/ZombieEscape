@@ -23,20 +23,20 @@
     }
 
     .title { color: #00FF66; font-size: 28px; font-weight: 900; text-align: center; margin-bottom: 4px; }
-    .subtitle { color: #888; font-size: 13px; text-align: center; margin-bottom: 24px; }
+    .subtitle { color: #888; font-size: 13px; text-align: center; margin-bottom: 20px; }
     
-    .section-label { font-size: 12px; color: #aaa; font-weight: bold; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+    .section-label { font-size: 11px; color: #aaa; font-weight: bold; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
 
-    .opt-grid { display: flex; gap: 8px; margin-bottom: 20px; }
+    .opt-grid { display: flex; gap: 8px; margin-bottom: 16px; }
     .opt-btn {
       flex: 1;
-      padding: 12px 8px;
+      padding: 12px 6px;
       background: #1a1a1a;
       border: 2px solid #333;
       color: #888;
       border-radius: 10px;
       font-weight: bold;
-      font-size: 13px;
+      font-size: 12px;
       cursor: pointer;
       text-align: center;
     }
@@ -47,7 +47,7 @@
       color: #000;
       font-weight: 900;
       font-size: 18px;
-      padding: 18px;
+      padding: 16px;
       border: none;
       border-radius: 12px;
       width: 100%;
@@ -60,50 +60,45 @@
     /* MAPPA ED HUD */
     #map { width: 100vw; height: 100vh; position: absolute; top:0; left:0; z-index: 1; background: #111; }
     
-    .hud { position: absolute; top:0; left:0; z-index: 100; pointer-events: none; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between; padding: 15px; }
+    .hud { position: absolute; top:0; left:0; z-index: 100; pointer-events: none; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between; padding: 12px; }
     .hud-top { display: flex; justify-content: space-between; align-items: flex-start; width: 100%; }
-    .stats-box { background: rgba(0, 0, 0, 0.9); padding: 8px 14px; border-radius: 10px; border: 1px solid #00FF66; }
+    .stats-box { background: rgba(0, 0, 0, 0.9); padding: 8px 12px; border-radius: 10px; border: 1px solid #00FF66; }
     .lives { color: #ff4757; font-size: 20px; letter-spacing: 2px; font-weight: bold; }
-    .hud-center { text-align: center; background: rgba(0,0,0,0.9); padding: 6px 14px; border-radius: 10px; border: 1px solid #333; }
+    .hud-center { text-align: center; background: rgba(0,0,0,0.9); padding: 6px 12px; border-radius: 10px; border: 1px solid #333; }
 
-    /* LAYOUT METRICHE CON TACHIMETRO ROSSO NEON AL CENTRO */
-    .hud-bottom { display: grid; grid-template-columns: 1fr 1.2fr 1fr; gap: 8px; width: 100%; pointer-events: auto; align-items: end; }
-    .metric-card { background: rgba(15, 23, 42, 0.95); border: 1px solid #333; padding: 8px 6px; border-radius: 10px; text-align: center; }
+    /* LAYOUT HUD IN BASSO */
+    .hud-bottom { display: flex; justify-content: space-between; align-items: flex-end; width: 100%; gap: 6px; pointer-events: auto; }
+    .metric-card { background: rgba(15, 23, 42, 0.95); border: 1px solid #333; padding: 8px 4px; border-radius: 10px; text-align: center; flex: 1; }
     
     .speed-card {
-      background: rgba(20, 0, 10, 0.95);
-      border: 2px solid #ff0055;
-      box-shadow: 0 0 15px rgba(255, 0, 85, 0.4);
-      padding: 10px 6px;
+      background: rgba(25, 0, 10, 0.95) !important;
+      border: 2px solid #ff0055 !important;
+      box-shadow: 0 0 15px rgba(255, 0, 85, 0.5);
+      padding: 10px 4px;
+      flex: 1.2;
     }
-    .speed-value {
-      font-size: 24px;
-      font-weight: 900;
-      color: #ff0055;
-      text-shadow: 0 0 10px #ff0055;
-    }
-    .speed-label {
-      font-size: 10px;
-      color: #ff0055;
-      font-weight: bold;
-      text-transform: uppercase;
-      margin-top: 2px;
-      letter-spacing: 1px;
-    }
+    .speed-value { font-size: 26px; font-weight: 900; color: #ff0055; text-shadow: 0 0 10px #ff0055; line-height: 1; }
+    .speed-label { font-size: 9px; color: #ff0055; font-weight: bold; text-transform: uppercase; margin-top: 3px; }
 
-    .metric-value { font-size: 18px; font-weight: bold; color: #00FF66; }
-    .metric-label { font-size: 9px; color: #aaa; text-transform: uppercase; margin-top: 2px; }
+    .metric-value { font-size: 16px; font-weight: bold; color: #00FF66; }
+    .metric-label { font-size: 8px; color: #aaa; text-transform: uppercase; margin-top: 2px; }
 
-    .dev-controls { position: absolute; bottom: 95px; left: 50%; transform: translateX(-50%); z-index: 110; display: grid; grid-template-columns: repeat(3, 44px); gap: 4px; background: rgba(0,0,0,0.9); padding: 6px; border-radius: 10px; pointer-events: auto; }
-    .dev-btn { background: #222; color: #00FF66; border: 1px solid #00FF66; width: 44px; height: 44px; border-radius: 8px; font-weight: bold; font-size: 18px; cursor: pointer; }
+    .dev-controls { position: absolute; bottom: 85px; left: 50%; transform: translateX(-50%); z-index: 110; display: grid; grid-template-columns: repeat(3, 42px); gap: 4px; background: rgba(0,0,0,0.9); padding: 6px; border-radius: 10px; pointer-events: auto; }
+    .dev-btn { background: #222; color: #00FF66; border: 1px solid #00FF66; width: 42px; height: 42px; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; }
 
-    /* ICONE MARKER */
+    /* STILI MARKER */
     .leaflet-marker-icon { overflow: visible !important; }
     .player-icon { width: 20px; height: 20px; background: #00FF66; border: 3px solid #fff; border-radius: 50%; box-shadow: 0 0 14px #00FF66; }
     .z-walker { width: 16px; height: 16px; background: #ff4757; border: 2px solid #000; border-radius: 50%; box-shadow: 0 0 8px #ff4757; }
     .z-runner { width: 14px; height: 14px; background: #ffa502; border: 2px solid #000; border-radius: 50%; box-shadow: 0 0 8px #ffa502; }
     .z-tank { width: 22px; height: 22px; background: #a55eea; border: 2px solid #000; border-radius: 50%; box-shadow: 0 0 10px #a55eea; }
     .crate-icon { width: 16px; height: 16px; background: #ffd32a; border: 2px solid #000; border-radius: 3px; box-shadow: 0 0 10px #ffd32a; }
+    
+    .exit-icon {
+      width: 32px; height: 32px; background: #00FF66; border: 3px solid #fff; border-radius: 50%;
+      box-shadow: 0 0 20px #00FF66; color: #000; font-weight: 900; font-size: 18px;
+      display: flex; align-items: center; justify-content: center;
+    }
   </style>
 </head>
 <body>
@@ -113,28 +108,34 @@
     <div class="title">ZOMBIE ESCAPE</div>
     <div class="subtitle">Imposta la tua partita survival</div>
 
-    <div class="section-label">1. Difficoltà</div>
+    <div class="section-label">1. Difficoltà e Distanza Uscita</div>
     <div class="opt-grid">
-      <div class="opt-btn active" onclick="selectOpt(this, 'diff', 'easy')">FACILE</div>
-      <div class="opt-btn" onclick="selectOpt(this, 'diff', 'medium')">MEDIA</div>
-      <div class="opt-btn" onclick="selectOpt(this, 'diff', 'hard')">HARDCORE</div>
+      <div class="opt-btn active" onclick="selectOpt(this, 'diff', 'easy')">FACILE<br><small>(500m)</small></div>
+      <div class="opt-btn" onclick="selectOpt(this, 'diff', 'medium')">MEDIA<br><small>(1.2 km)</small></div>
+      <div class="opt-btn" onclick="selectOpt(this, 'diff', 'hard')">HARDCORE<br><small>(2.5 km)</small></div>
     </div>
 
-    <div class="section-label">2. Vite Iniziali</div>
+    <div class="section-label">2. Numero Uscite</div>
+    <div class="opt-grid">
+      <div class="opt-btn active" onclick="selectOpt(this, 'exits', 1)">1 USCITA</div>
+      <div class="opt-btn" onclick="selectOpt(this, 'exits', 2)">2 USCITE</div>
+    </div>
+
+    <div class="section-label">3. Vite Iniziali</div>
     <div class="opt-grid">
       <div class="opt-btn" onclick="selectOpt(this, 'lives', 1)">1 VITA</div>
       <div class="opt-btn active" onclick="selectOpt(this, 'lives', 3)">3 VITE</div>
       <div class="opt-btn" onclick="selectOpt(this, 'lives', 5)">5 VITE</div>
     </div>
 
-    <div class="section-label">3. Quantità Zombie Iniziali</div>
+    <div class="section-label">4. Zombie Iniziali</div>
     <div class="opt-grid">
-      <div class="opt-btn" onclick="selectOpt(this, 'count', 2)">POCHI (2)</div>
-      <div class="opt-btn active" onclick="selectOpt(this, 'count', 4)">NORMAL (4)</div>
-      <div class="opt-btn" onclick="selectOpt(this, 'count', 8)">ORDA (8)</div>
+      <div class="opt-btn" onclick="selectOpt(this, 'count', 3)">POCHI (3)</div>
+      <div class="opt-btn active" onclick="selectOpt(this, 'count', 6)">NORMAL (6)</div>
+      <div class="opt-btn" onclick="selectOpt(this, 'count', 10)">ORDA (10)</div>
     </div>
 
-    <button class="start-btn" onclick="launchGame()">AVVIA PARTITA</button>
+    <button class="start-btn" onclick="launchGame()">AVVIA ESCAPE</button>
   </div>
 
   <!-- INTERFACCIA HUD -->
@@ -152,28 +153,27 @@
     </div>
 
     <div class="dev-controls" id="dev-panel">
-      <div></div><button class="dev-btn" onclick="moveSim(0.00015, 0)">▲</button><div></div>
-      <button class="dev-btn" onclick="moveSim(0, -0.00015)">◄</button>
-      <button class="dev-btn" onclick="moveSim(-0.00015, 0)">▼</button>
-      <button class="dev-btn" onclick="moveSim(0, 0.00015)">►</button>
+      <div></div><button class="dev-btn" onclick="moveSim(0.0003, 0)">▲</button><div></div>
+      <button class="dev-btn" onclick="moveSim(0, -0.0003)">◄</button>
+      <button class="dev-btn" onclick="moveSim(-0.0003, 0)">▼</button>
+      <button class="dev-btn" onclick="moveSim(0, 0.0003)">►</button>
     </div>
 
-    <!-- TACHIMETRO E METRICHE -->
+    <!-- METRICHE HUD CON TACHIMETRO ROSSO AL CENTRO -->
     <div class="hud-bottom">
       <div class="metric-card">
         <div id="threat-dist" class="metric-value" style="color:#ff4757;">--</div>
-        <div class="metric-label">Minaccia</div>
+        <div class="metric-label">Zombie</div>
       </div>
-      
-      <!-- TACHIMETRO ROSSO NEON -->
+
       <div class="metric-card speed-card">
         <div id="speed-val" class="speed-value">0</div>
         <div class="speed-label">KM / H</div>
       </div>
 
       <div class="metric-card">
-        <div id="horde-size" class="metric-value" style="color:#00E5FF;">0</div>
-        <div class="metric-label">Zombie</div>
+        <div id="exit-dist" class="metric-value" style="color:#00FF66;">--</div>
+        <div class="metric-label">Uscita</div>
       </div>
     </div>
   </div>
@@ -184,16 +184,18 @@
   <script>
     let map, playerMarker;
     let playerPos = [45.4642, 9.1900];
-    let zombies = [], crates = [];
+    let zombies = [], crates = [], exits = [];
     let lives = 3, maxLives = 3, score = 0, timeSurvived = 0, wave = 1;
     let gameLoopInterval, waveInterval, crateInterval, timerInterval;
     let isGameOver = false;
     let speedTimeout;
 
-    let config = { diff: 'easy', lives: 3, count: 4 };
+    let config = { diff: 'easy', exits: 1, lives: 3, count: 6 };
     
-    // Moltiplicatori velocità significativamente aumentati per aggressività estrema
-    const diffSpeeds = { easy: 1.2, medium: 2.0, hard: 3.2 };
+    // Distanze uscite in metri
+    const exitDistances = { easy: 500, medium: 1200, hard: 2500 };
+    // Moltiplicatori velocità zombie
+    const diffSpeeds = { easy: 1.5, medium: 2.2, hard: 3.5 };
 
     function selectOpt(btn, category, value) {
       config[category] = value;
@@ -202,7 +204,7 @@
     }
 
     function initMap() {
-      map = L.map('map', { zoomControl: false, attributionControl: false }).setView(playerPos, 17);
+      map = L.map('map', { zoomControl: false, attributionControl: false }).setView(playerPos, 16);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
       const playerIcon = L.divIcon({ className: 'player-icon', html: '', iconSize: [20, 20], iconAnchor: [10, 10] });
@@ -210,19 +212,19 @@
     }
 
     function spawnZombie(type) {
-      let radius = 0.0025;
-      let zPos = [playerPos[0] + (Math.random() - 0.5) * radius, playerPos[1] + (Math.random() - 0.5) * radius];
+      // Offset casuale sicuro per evitare coordinate invalide
+      let offsetLat = (Math.random() - 0.5) * 0.003;
+      let offsetLng = (Math.random() - 0.5) * 0.003;
+      let zPos = [playerPos[0] + offsetLat, playerPos[1] + offsetLng];
 
-      // Zombie molto più veloci ed reattivi
-      let cssClass = 'z-walker', speed = 0.015, dmg = 1, size = 16;
-      if(type === 'runner') { cssClass = 'z-runner'; speed = 0.035; size = 14; }
-      if(type === 'tank') { cssClass = 'z-tank'; speed = 0.008; dmg = 2; size = 22; }
+      let cssClass = 'z-walker', speed = 0.012, dmg = 1, size = 16;
+      if(type === 'runner') { cssClass = 'z-runner'; speed = 0.025; size = 14; }
+      if(type === 'tank') { cssClass = 'z-tank'; speed = 0.007; dmg = 2; size = 22; }
 
       const zIcon = L.divIcon({ className: cssClass, html: '', iconSize: [size, size], iconAnchor: [size/2, size/2] });
       let marker = L.marker(zPos, { icon: zIcon }).addTo(map);
 
       zombies.push({ marker: marker, pos: zPos, speed: speed * diffSpeeds[config.diff], damage: dmg });
-      document.getElementById('horde-size').innerText = zombies.length;
     }
 
     function spawnCrate() {
@@ -232,33 +234,63 @@
       crates.push({ marker: marker, pos: cPos });
     }
 
-    // Tick di gioco ad alta frequenza (200ms = 5 frame al secondo per inseguimento aggressivo e fluido)
+    function setupExits() {
+      let targetMeters = exitDistances[config.diff];
+      // Converti metri approssimativamente in gradi lat/lng
+      let degOffset = targetMeters / 111320; 
+
+      let angles = [0, 180]; // Angoli opposti se ci sono 2 uscite
+      for (let i = 0; i < config.exits; i++) {
+        let angle = (angles[i] + Math.random() * 40 - 20) * (Math.PI / 180);
+        let eLat = playerPos[0] + (degOffset * Math.cos(angle));
+        let eLng = playerPos[1] + (degOffset * Math.sin(angle));
+        let ePos = [eLat, eLng];
+
+        const exitIcon = L.divIcon({ className: 'exit-icon', html: 'E', iconSize: [32, 32], iconAnchor: [16, 16] });
+        let marker = L.marker(ePos, { icon: exitIcon }).addTo(map);
+        exits.push({ marker: marker, pos: ePos });
+      }
+    }
+
     function updateGameLoop() {
       if (isGameOver) return;
 
-      let closestDist = 9999;
+      let closestZombieDist = 9999;
+      let closestExitDist = 9999;
 
+      // Inseguimento Zombie
       zombies.forEach((z) => {
         let dLat = playerPos[0] - z.pos[0];
         let dLng = playerPos[1] - z.pos[1];
         
-        // Calcolo inseguimento diretto aggressivo
         z.pos[0] += dLat * z.speed;
         z.pos[1] += dLng * z.speed;
         z.marker.setLatLng(z.pos);
 
         let dist = Math.hypot(dLat, dLng) * 111320;
-        if (dist < closestDist) closestDist = dist;
+        if (dist < closestZombieDist) closestZombieDist = dist;
 
-        // Attacco zombie se vicini
         if (dist < 10) {
           lives -= z.damage;
           updateLivesUI();
-          // Respawn a distanza quando attacca
           z.pos = [playerPos[0] + (Math.random() - 0.5) * 0.003, playerPos[1] + (Math.random() - 0.5) * 0.003];
         }
       });
 
+      // Calcolo Distanza Uscite & Vittoria
+      exits.forEach((e) => {
+        let dist = Math.hypot(playerPos[0] - e.pos[0], playerPos[1] - e.pos[1]) * 111320;
+        if (dist < closestExitDist) closestExitDist = dist;
+
+        if (dist < 15) {
+          isGameOver = true;
+          clearInterval(gameLoopInterval);
+          alert(`HAI VINTO!\nSei fuggito con successo!\nPunteggio: ${score}`);
+          location.reload();
+        }
+      });
+
+      // Casse di cura
       crates.forEach((c, index) => {
         let dist = Math.hypot(playerPos[0] - c.pos[0], playerPos[1] - c.pos[1]) * 111320;
         if (dist < 12) {
@@ -270,7 +302,13 @@
         }
       });
 
-      document.getElementById('threat-dist').innerText = closestDist < 1000 ? Math.round(closestDist) + 'm' : '--';
+      document.getElementById('threat-dist').innerText = closestZombieDist < 1000 ? Math.round(closestZombieDist) + 'm' : '--';
+      
+      if (closestExitDist >= 1000) {
+        document.getElementById('exit-dist').innerText = (closestExitDist / 1000).toFixed(1) + 'km';
+      } else {
+        document.getElementById('exit-dist').innerText = Math.round(closestExitDist) + 'm';
+      }
     }
 
     function updateLivesUI() {
@@ -280,8 +318,6 @@
       if (lives <= 0) {
         isGameOver = true;
         clearInterval(gameLoopInterval);
-        clearInterval(waveInterval);
-        clearInterval(timerInterval);
         alert(`GAME OVER!\nPunteggio Finale: ${score}`);
         location.reload();
       }
@@ -304,7 +340,6 @@
             playerMarker.setLatLng(playerPos);
             map.panTo(playerPos);
             
-            // Lettura velocità reale GPS
             let currentSpeed = 0;
             if (pos.coords.speed !== null && pos.coords.speed !== undefined && !isNaN(pos.coords.speed)) {
               currentSpeed = Math.round(pos.coords.speed * 3.6);
@@ -317,13 +352,12 @@
         );
       }
 
+      setupExits();
       for(let i = 0; i < config.count; i++) spawnZombie('walker');
       spawnCrate();
 
-      // Loop di movimento rapidissimo (200ms)
       gameLoopInterval = setInterval(updateGameLoop, 200);
 
-      // Timer ogni secondo
       timerInterval = setInterval(() => {
         if(isGameOver) return;
         timeSurvived++;
@@ -334,7 +368,6 @@
         document.getElementById('score').innerText = `PUNTI: ${score}`;
       }, 1000);
 
-      // Ondate zombi più frequenti (ogni 18 secondi)
       waveInterval = setInterval(() => {
         wave++;
         document.getElementById('wave-txt').innerText = `ONDATA ${wave}`;
@@ -353,8 +386,8 @@
       playerMarker.setLatLng(playerPos);
       map.panTo(playerPos);
 
-      // Simulatore velocità tachimetro (test frecce)
-      document.getElementById('speed-val').innerText = "18";
+      // Simulatore velocità (~20 km/h nei test)
+      document.getElementById('speed-val').innerText = "20";
       clearTimeout(speedTimeout);
       speedTimeout = setTimeout(() => {
         document.getElementById('speed-val').innerText = "0";
