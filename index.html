@@ -1,381 +1,323 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="it">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Zombie Escape GPS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Zombie GPS Survival - Engine Completo</title>
+  
+  <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; user-select: none; }
-    body, html { width: 100%; height: 100%; overflow: hidden; background: #000; color: #fff; }
-    
-    .menu-screen {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100vw; height: 100vh;
-      background: rgba(13, 13, 13, 0.95);
-      z-index: 99999;
-      display: flex;
-      flex-direction: column;
-      padding: 24px;
-      overflow-y: auto;
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
     }
-
-    .title { color: #00FF66; font-size: 32px; font-weight: 900; text-align: center; margin-bottom: 4px; text-shadow: 0 0 15px rgba(0, 255, 102, 0.4); }
-    .subtitle { color: #888; font-size: 13px; text-align: center; margin-bottom: 20px; }
-    
-    .section-label { font-size: 11px; color: #aaa; font-weight: bold; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
-
-    .legend-box {
-      background: #141414;
-      border: 1px solid #222;
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    .legend-item { display: flex; align-items: center; gap: 12px; font-size: 13px; color: #ccc; }
-    .legend-item strong { color: #fff; }
-
-    .opt-grid { display: flex; gap: 8px; margin-bottom: 16px; }
-    .opt-btn {
-      flex: 1;
-      padding: 12px 6px;
-      background: #1a1a1a;
-      border: 2px solid #333;
-      color: #888;
-      border-radius: 10px;
-      font-weight: bold;
-      font-size: 12px;
-      cursor: pointer;
-      text-align: center;
-    }
-    .opt-btn.active { border-color: #00FF66; background: rgba(0, 255, 102, 0.15); color: #00FF66; }
-
-    .main-btn {
-      background: #00FF66;
-      color: #000;
-      font-weight: 900;
-      font-size: 20px;
-      padding: 16px;
-      border: none;
-      border-radius: 12px;
+    body, html {
       width: 100%;
-      cursor: pointer;
-      text-transform: uppercase;
-      box-shadow: 0 0 20px rgba(0, 255, 102, 0.4);
-      margin-bottom: 12px;
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background-color: #050505;
+      color: #fff;
     }
-
-    .gps-status-banner {
-      background: #1a1a1a;
-      border: 1px solid #333;
-      border-radius: 8px;
-      padding: 8px 12px;
-      margin-bottom: 15px;
-      text-align: center;
-      font-size: 12px;
-      color: #ffa502;
+    #map {
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      background: #000;
     }
-    .gps-status-banner.ok { border-color: #00FF66; color: #00FF66; }
-
-    .history-container {
-      margin-top: 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      margin-bottom: 20px;
-    }
-    .history-card {
-      background: #141414;
-      border: 1px solid #333;
-      border-radius: 12px;
-      padding: 12px;
+    
+    /* HUD Overlay */
+    .hud-top {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      z-index: 1000;
       display: flex;
       flex-direction: column;
       gap: 8px;
+      pointer-events: none;
     }
-    .history-card-header {
+    .hud-row {
       display: flex;
       justify-content: space-between;
-      font-weight: bold;
-      font-size: 14px;
-      color: #00FF66;
+      gap: 8px;
     }
-    .history-map {
-      width: 100%;
-      height: 140px;
+    .hud-card {
+      background: rgba(10, 15, 20, 0.85);
+      border: 1px solid rgba(0, 255, 204, 0.3);
+      padding: 8px 12px;
       border-radius: 8px;
-      background: #222;
-      border: 1px solid #444;
-    }
-    .history-stats {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 6px;
-      font-size: 11px;
-      color: #aaa;
+      backdrop-filter: blur(8px);
+      flex: 1;
       text-align: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
     }
-    .history-stats strong {
-      display: block;
-      color: #fff;
-      font-size: 13px;
+    .hud-title {
+      font-size: 10px;
+      text-transform: uppercase;
+      color: #888;
+      letter-spacing: 1px;
+    }
+    .hud-value {
+      font-size: 16px;
+      font-weight: bold;
+      color: #00ffcc;
+    }
+    .health-bar-container {
+      width: 100%;
+      background: rgba(250, 0, 0, 0.2);
+      border: 1px solid #ff3366;
+      height: 14px;
+      border-radius: 7px;
+      overflow: hidden;
+      position: relative;
+    }
+    .health-bar-fill {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, #ff3366, #ff6600);
+      transition: width 0.3s ease;
     }
 
-    #map { width: 100vw; height: 100vh; position: absolute; top:0; left:0; z-index: 1; background: #111; }
-    
-    .hud { position: absolute; top:0; left:0; z-index: 100; pointer-events: none; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between; padding: 12px; }
-    .hud-top { display: flex; justify-content: space-between; align-items: flex-start; width: 100%; }
-    
-    .exit-tracker-box {
-      background: rgba(0, 0, 0, 0.9);
-      padding: 8px 12px;
-      border-radius: 10px;
-      border: 1px solid #00FF66;
+    /* Radar / Scanner FX Overlay */
+    .scanner-overlay {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 280px;
+      height: 280px;
+      border: 1px solid rgba(0, 255, 204, 0.15);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 500;
+    }
+    .scanner-overlay::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 140px;
+      height: 140px;
+      border: 1px dashed rgba(0, 255, 204, 0.1);
+      border-radius: 50%;
+    }
+
+    /* Controls & Actions */
+    .controls {
+      position: absolute;
+      bottom: 15px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
       display: flex;
       flex-direction: column;
-      gap: 4px;
-      max-width: 140px;
+      align-items: center;
+      gap: 8px;
+      width: 92%;
+      max-width: 420px;
     }
-    .tracker-item { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: bold; color: #00FF66; }
-    .arrow-icon { font-size: 18px; display: inline-block; transition: transform 0.2s ease; transform-origin: center; }
-
-    .stats-box { background: rgba(0, 0, 0, 0.9); padding: 8px 12px; border-radius: 10px; border: 1px solid #00FF66; text-align: right; }
-    .lives { color: #ff4757; font-size: 18px; letter-spacing: 2px; font-weight: bold; }
-    .hud-center { text-align: center; background: rgba(0,0,0,0.9); padding: 6px 12px; border-radius: 10px; border: 1px solid #333; }
-
-    .hud-bottom { display: flex; justify-content: space-between; align-items: flex-end; width: 100%; gap: 6px; pointer-events: auto; }
-    .metric-card { background: rgba(15, 23, 42, 0.95); border: 1px solid #333; padding: 8px 4px; border-radius: 10px; text-align: center; flex: 1; }
-    
-    .speed-card {
-      background: rgba(25, 0, 10, 0.95) !important;
-      border: 2px solid #ff0055 !important;
-      box-shadow: 0 0 15px rgba(255, 0, 85, 0.5);
-      padding: 10px 4px;
-      flex: 1.2;
-    }
-    .speed-value { font-size: 26px; font-weight: 900; color: #ff0055; text-shadow: 0 0 10px #ff0055; line-height: 1; }
-    .speed-label { font-size: 9px; color: #ff0055; font-weight: bold; text-transform: uppercase; margin-top: 3px; }
-
-    .metric-value { font-size: 16px; font-weight: bold; color: #00FF66; }
-    .metric-label { font-size: 8px; color: #aaa; text-transform: uppercase; margin-top: 2px; }
-
-    /* CONTROLLI ACTION (DECOY & DEV) */
-    .action-controls {
-      position: absolute;
-      bottom: 85px;
-      right: 12px;
-      z-index: 110;
-      pointer-events: auto;
-    }
-    .decoy-btn {
-      background: rgba(0, 168, 255, 0.2);
-      border: 2px solid #00a8ff;
-      color: #00a8ff;
-      font-weight: 900;
-      padding: 10px 14px;
+    .btn-main {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #00ffcc, #0099ff);
+      color: #000;
+      font-weight: 800;
+      border: none;
       border-radius: 12px;
+      font-size: 15px;
+      letter-spacing: 1px;
       cursor: pointer;
-      box-shadow: 0 0 10px rgba(0, 168, 255, 0.4);
-      font-size: 12px;
+      box-shadow: 0 4px 15px rgba(0, 255, 204, 0.4);
       text-transform: uppercase;
     }
-    .decoy-btn:disabled { opacity: 0.4; border-color: #555; color: #555; box-shadow: none; }
-
-    .dev-controls { position: absolute; bottom: 85px; left: 50%; transform: translateX(-50%); z-index: 110; display: grid; grid-template-columns: repeat(3, 42px); gap: 4px; background: rgba(0,0,0,0.9); padding: 6px; border-radius: 10px; pointer-events: auto; }
-    .dev-btn { background: #222; color: #00FF66; border: 1px solid #00FF66; width: 42px; height: 42px; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; }
-
-    .leaflet-marker-icon { overflow: visible !important; }
-    .player-icon { width: 20px; height: 20px; background: #00FF66; border: 3px solid #fff; border-radius: 50%; box-shadow: 0 0 14px #00FF66; }
-    .start-icon { width: 14px; height: 14px; background: #00a8ff; border: 2px solid #fff; border-radius: 50%; }
-    .end-icon { width: 14px; height: 14px; background: #44bd32; border: 2px solid #fff; border-radius: 50%; }
-
-    .z-walker-demo, .z-walker { width: 16px; height: 16px; background: #ff4757; border: 2px solid #000; border-radius: 50%; box-shadow: 0 0 8px #ff4757; display: inline-block; flex-shrink: 0; }
-    .z-runner-demo, .z-runner { width: 14px; height: 14px; background: #ffa502; border: 2px solid #000; border-radius: 50%; box-shadow: 0 0 8px #ffa502; display: inline-block; flex-shrink: 0; }
-    .z-tank-demo, .z-tank { width: 22px; height: 22px; background: #a55eea; border: 2px solid #000; border-radius: 50%; box-shadow: 0 0 10px #a55eea; display: inline-block; flex-shrink: 0; }
-    .crate-icon { width: 16px; height: 16px; background: #ffd32a; border: 2px solid #000; border-radius: 3px; box-shadow: 0 0 10px #ffd32a; }
-    .decoy-icon { width: 18px; height: 18px; background: #00a8ff; border: 2px solid #fff; border-radius: 50%; box-shadow: 0 0 15px #00a8ff; animation: pulse 0.8s infinite alternate; }
-    
-    @keyframes pulse {
-      from { transform: scale(0.9); opacity: 0.8; }
-      to { transform: scale(1.2); opacity: 1; }
+    .btn-main:active {
+      transform: scale(0.97);
+    }
+    .action-row {
+      display: flex;
+      gap: 8px;
+      width: 100%;
+    }
+    .btn-action {
+      flex: 1;
+      padding: 10px;
+      background: rgba(20, 25, 30, 0.9);
+      border: 1px solid #444;
+      color: #fff;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .btn-action:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
     }
 
-    .exit-icon-demo, .exit-icon {
-      width: 28px; height: 28px; background: #00FF66; border: 2px solid #fff; border-radius: 50%;
-      box-shadow: 0 0 15px #00FF66; color: #000; font-weight: 900; font-size: 15px;
-      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    /* Simulation Pad for Testing */
+    .sim-pad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 4px;
+      width: 100%;
+      background: rgba(0,0,0,0.6);
+      padding: 6px;
+      border-radius: 8px;
+    }
+    .btn-sim {
+      padding: 6px;
+      background: #222;
+      border: 1px solid #444;
+      color: #aaa;
+      border-radius: 4px;
+      font-size: 11px;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    /* Log Panel */
+    .log-panel {
+      position: absolute;
+      bottom: 230px;
+      left: 12px;
+      right: 12px;
+      height: 70px;
+      z-index: 900;
+      background: rgba(0,0,0,0.7);
+      border-left: 3px solid #00ffcc;
+      padding: 6px 10px;
+      font-size: 11px;
+      font-family: monospace;
+      overflow-y: auto;
+      pointer-events: none;
+      border-radius: 0 6px 6px 0;
+    }
+    .log-entry {
+      margin-bottom: 3px;
+    }
+    .log-danger { color: #ff3366; }
+    .log-success { color: #00ffcc; }
+    .log-info { color: #ffcc00; }
+
+    /* Custom Map Markers CSS */
+    .leaflet-vague-tile {
+      filter: brightness(0.6) contrast(1.3) hue-rotate(160deg) invert(0.1);
     }
   </style>
 </head>
 <body>
 
-  <!-- START MENU -->
-  <div id="start-menu" class="menu-screen">
-    <div class="title">ZOMBIE ESCAPE</div>
-    <div class="subtitle">Real-Time GPS Survival (Local Town Edition)</div>
-
-    <div id="gps-status-1" class="gps-status-banner">Searching GPS Signal...</div>
-
-    <div class="section-label">Game Elements</div>
-    <div class="legend-box">
-      <div class="legend-item">
-        <div class="exit-icon-demo">E</div>
-        <div><strong>EXIT:</strong> Reach it to escape!</div>
+  <!-- HUD Top -->
+  <div class="hud-top">
+    <div class="hud-row">
+      <div class="hud-card">
+        <div class="hud-title">Salute</div>
+        <div class="health-bar-container" style="margin-top: 4px;">
+          <div class="health-bar-fill" id="hp-bar"></div>
+        </div>
       </div>
-      <div class="legend-item">
-        <div class="z-walker-demo"></div>
-        <div><strong>WALKER (10 km/h):</strong> Standard Zombie.</div>
+      <div class="hud-card">
+        <div class="hud-title">Minaccia</div>
+        <div class="hud-value" id="zombie-count">0</div>
       </div>
-      <div class="legend-item">
-        <div class="z-runner-demo"></div>
-        <div><strong>RUNNER (15 km/h):</strong> Fast Runner Zombie.</div>
-      </div>
-      <div class="legend-item">
-        <div class="z-tank-demo"></div>
-        <div><strong>TANK (5 km/h):</strong> Heavy Zombie (2 damage).</div>
+      <div class="hud-card">
+        <div class="hud-title">Velocità</div>
+        <div class="hud-value"><span id="speed-val">0.0</span> <small style="font-size:10px;">km/h</small></div>
       </div>
     </div>
-
-    <button class="main-btn" onclick="goToSetup()">PLAY</button>
-
-    <div class="section-label">COMPLETED RUNS</div>
-    <div id="history-list" class="history-container">
-      <div style="font-size: 12px; color: #666; text-align: center;">No runs completed yet.</div>
-    </div>
-  </div>
-
-  <!-- SETUP MENU -->
-  <div id="setup-menu" class="menu-screen" style="display: none;">
-    <div class="title">CONFIGURATION</div>
-    <div class="subtitle">Setup Your Match</div>
-
-    <div id="gps-status-2" class="gps-status-banner">Searching GPS Signal...</div>
-
-    <div class="section-label">1. Difficulty & Exit Distance</div>
-    <div class="opt-grid">
-      <div class="opt-btn active" onclick="selectOpt(this, 'diff', 'EASY')">SHORT<br><small>(250m)</small></div>
-      <div class="opt-btn" onclick="selectOpt(this, 'diff', 'MEDIUM')">TOWN<br><small>(500m)</small></div>
-      <div class="opt-btn" onclick="selectOpt(this, 'diff', 'HARDCORE')">BORDER<br><small>(800m)</small></div>
-    </div>
-
-    <div class="section-label">2. Exits Count</div>
-    <div class="opt-grid">
-      <div class="opt-btn active" onclick="selectOpt(this, 'exits', 1)">1 EXIT</div>
-      <div class="opt-btn" onclick="selectOpt(this, 'exits', 2)">2 EXITS</div>
-    </div>
-
-    <div class="section-label">3. Initial Lives</div>
-    <div class="opt-grid">
-      <div class="opt-btn" onclick="selectOpt(this, 'lives', 1)">1 LIFE</div>
-      <div class="opt-btn active" onclick="selectOpt(this, 'lives', 3)">3 LIVES</div>
-    </div>
-
-    <div class="section-label">4. Initial Zombies</div>
-    <div class="opt-grid">
-      <div class="opt-btn" onclick="selectOpt(this, 'count', 3)">FEW (3)</div>
-      <div class="opt-btn active" onclick="selectOpt(this, 'count', 6)">NORMAL (6)</div>
-      <div class="opt-btn" onclick="selectOpt(this, 'count', 10)">HORDE (10)</div>
-    </div>
-
-    <button class="main-btn" onclick="launchGame()">START ESCAPE</button>
-  </div>
-
-  <!-- GAME HUD -->
-  <div class="hud">
-    <div class="hud-top">
-      <div class="exit-tracker-box" id="tracker-container"></div>
-      
-      <div class="hud-center">
-        <div id="timer" style="color:#00FF66; font-weight:bold; font-size:16px;">00:00</div>
-        <div id="score" style="font-size:10px; color:#aaa;">SCORE: 0</div>
+    <div class="hud-row">
+      <div class="hud-card">
+        <div class="hud-title">Risorse / Medkit</div>
+        <div class="hud-value" id="medkit-count" style="color:#ffcc00;">0</div>
       </div>
-
-      <div class="stats-box">
-        <div id="lives-display" class="lives">♥♥♥</div>
-        <div id="wave-txt" style="font-size:10px; color:#aaa;">WAVE 1</div>
-      </div>
-    </div>
-
-    <div class="action-controls">
-      <button id="decoy-btn-ui" class="decoy-btn" onclick="deployDecoy()">💨 DECOY (<span id="decoy-count">2</span>)</button>
-    </div>
-
-    <div class="dev-controls" id="dev-panel">
-      <div></div><button class="dev-btn" onclick="moveSim(0.0003, 0)">▲</button><div></div>
-      <button class="dev-btn" onclick="moveSim(0, -0.0003)">◄</button>
-      <button class="dev-btn" onclick="moveSim(-0.0003, 0)">▼</button>
-      <button class="dev-btn" onclick="moveSim(0, 0.0003)">►</button>
-    </div>
-
-    <div class="hud-bottom">
-      <div class="metric-card">
-        <div id="threat-dist" class="metric-value" style="color:#ff4757;">--</div>
-        <div class="metric-label">Zombie</div>
-      </div>
-
-      <div class="metric-card speed-card">
-        <div id="speed-val" class="speed-value">0</div>
-        <div class="speed-label">KM / H</div>
-      </div>
-
-      <div class="metric-card">
-        <div id="exit-dist" class="metric-value" style="color:#00FF66;">--</div>
-        <div class="metric-label">Nearest Exit</div>
+      <div class="hud-card">
+        <div class="hud-title">Punteggio</div>
+        <div class="hud-value" id="score-val" style="color:#fff;">0</div>
       </div>
     </div>
   </div>
 
+  <!-- Radar Overlay Visual -->
+  <div class="scanner-overlay"></div>
+
+  <!-- Map Display -->
   <div id="map"></div>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script>
-    let map, playerMarker;
-    let playerPos = null;
-    let startPos = null;
-    let gpsAcquired = false;
-    let zombies = [], crates = [], exits = [], safeZones = [], dangerZones = [];
-    let activeDecoy = null;
-    let decoyCount = 2;
+  <!-- Log Panel -->
+  <div class="log-panel" id="game-log">
+    <div class="log-entry log-info">> Sistema Inizializzato. In attesa del segnale GPS...</div>
+  </div>
 
-    let lives = 3, maxLives = 3, score = 0, timeSurvived = 0, wave = 1;
-    let totalZombiesSpawned = 0;
-    let maxSpeedReached = 0;
-
-    let gameLoopInterval, waveInterval, crateInterval, timerInterval, radarInterval;
-    let isGameOver = false;
-    let gameStarted = false;
-    let speedTimeout;
-
-    let lastGPSPos = null;
-    let lastGPSTime = null;
-
-    let config = { diff: 'EASY', exits: 1, lives: 3, count: 6 };
+  <!-- Controls Bottom -->
+  <div class="controls">
+    <button class="btn-main" id="start-btn" onclick="toggleGame()">AVVIA RADAR GPS</button>
     
-    // DISTANZE PRECISE: 250m, 500m, 800m
-    const exitDistances = { EASY: 250, MEDIUM: 500, HARDCORE: 800 };
+    <div class="action-row">
+      <button class="btn-action" id="use-kit-btn" onclick="useMedkit()" disabled>USA MEDKIT (+30 HP)</button>
+      <button class="btn-action" id="clear-log-btn" onclick="clearLogs()">PULISCI LOG</button>
+    </div>
 
-    // AUDIO CONTEXT PER SUONI E RADAR
+    <!-- Tastiera Simulazione Movimento GPS per test su PC -->
+    <div class="sim-pad">
+      <div></div>
+      <button class="btn-sim" onclick="moveSim(0.00015, 0)">▲ N</button>
+      <div></div>
+      <button class="btn-sim" onclick="moveSim(0, -0.00015)">◀ O</button>
+      <button class="btn-sim" style="background:#333; color:#fff;" onclick="centerMap()">🎯 CENTRA</button>
+      <button class="btn-sim" onclick="moveSim(0, 0.00015)">E ▶</button>
+      <div></div>
+      <button class="btn-sim" onclick="moveSim(-0.00015, 0)">▼ S</button>
+      <div></div>
+    </div>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script>
+    // --- STATO DEL GIOCO E VARIABILI GLOBALI ---
+    let map, playerMarker, accuracyCircle;
+    let isPlaying = false;
+    let watchId = null;
+    
+    // Posizione Iniziale di Backup (Coordinate Roma Centro)
+    let playerPos = [41.9028, 12.4964]; 
+    let playerHp = 100;
+    let score = 0;
+    let medkits = 1;
+    
+    let zombies = [];
+    let lootBoxes = [];
+    
+    let speedTimeout = null;
+    let lastPosition = null;
+    let lastTimestamp = null;
     let audioCtx = null;
 
+    // --- LOGICA AUDIO SYNTHESIS (Web Audio API) ---
     function initAudio() {
       if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       }
     }
 
-    function playBeep(freq, duration) {
+    function playBeep(freq = 880, type = 'sine', duration = 0.1) {
       if (!audioCtx) return;
       try {
-        let osc = audioCtx.createOscillator();
-        let gain = audioCtx.createGain();
-        osc.type = 'sine';
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
         osc.frequency.value = freq;
-        gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+        gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
         osc.connect(gain);
         gain.connect(audioCtx.destination);
         osc.start();
@@ -383,464 +325,348 @@
       } catch(e) {}
     }
 
-    function playSoundEffect(type) {
-      if (!audioCtx) return;
-      if (type === 'pickup') {
-        playBeep(600, 0.1);
-        setTimeout(() => playBeep(900, 0.15), 100);
-      } else if (type === 'hit') {
-        playBeep(150, 0.2);
-      } else if (type === 'win') {
-        playBeep(400, 0.1);
-        setTimeout(() => playBeep(600, 0.1), 100);
-        setTimeout(() => playBeep(800, 0.2), 200);
-      } else if (type === 'decoy') {
-        playBeep(300, 0.3);
+    function playAlarmSound() {
+      playBeep(300, 'sawtooth', 0.25);
+      setTimeout(() => playBeep(200, 'sawtooth', 0.3), 150);
+    }
+
+    function playLootSound() {
+      playBeep(523.25, 'triangle', 0.1);
+      setTimeout(() => playBeep(659.25, 'triangle', 0.1), 80);
+      setTimeout(() => playBeep(783.99, 'triangle', 0.15), 160);
+    }
+
+    // --- INIZIALIZZAZIONE MAPPA LEAFLET ---
+    function initMap() {
+      map = L.map('map', { 
+        zoomControl: false,
+        attributionControl: false 
+      }).setView(playerPos, 17);
+      
+      // Tile layer scuro tramite CartoDB
+      const tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        maxZoom: 19,
+        subdomains: 'abcd'
+      }).addTo(map);
+
+      // Applica filtri CSS per rendere la mappa più scura e apocalittica
+      tileLayer.getContainer().classList.add('leaflet-vague-tile');
+
+      // Marker Posizione Giocatore
+      playerMarker = L.circleMarker(playerPos, {
+        color: '#00ffcc',
+        fillColor: '#00ffcc',
+        fillOpacity: 0.9,
+        radius: 9,
+        weight: 3
+      }).addTo(map);
+
+      // Cerchio Raggio Tolleranza/Accuratezza GPS
+      accuracyCircle = L.circle(playerPos, {
+        color: '#00ffcc',
+        fillColor: '#00ffcc',
+        fillOpacity: 0.05,
+        radius: 30,
+        weight: 1
+      }).addTo(map);
+
+      // Carica Storico Salvato
+      loadGameState();
+    }
+
+    // --- SISTEMA LOGS IN-GAME ---
+    function addLog(text, type = 'info') {
+      const logPanel = document.getElementById('game-log');
+      const entry = document.createElement('div');
+      entry.className = `log-entry log-${type}`;
+      entry.innerText = `> ${text}`;
+      logPanel.appendChild(entry);
+      logPanel.scrollTop = logPanel.scrollHeight;
+    }
+
+    function clearLogs() {
+      document.getElementById('game-log').innerHTML = '';
+      addLog("Registro ripulito.", "info");
+    }
+
+    // --- AVVIO E ARRESTO DEL GIOCO ---
+    function toggleGame() {
+      initAudio();
+      const btn = document.getElementById('start-btn');
+      
+      if (!isPlaying) {
+        isPlaying = true;
+        btn.innerText = "ARRESTA RADAR";
+        btn.style.background = "linear-gradient(135deg, #ff3366, #ff0000)";
+        btn.style.boxShadow = "0 4px 15px rgba(255, 51, 102, 0.4)";
+        
+        addLog("Radar attivato. Tracciamento GPS in corso...", "success");
+        startTracking();
+        gameLoop();
+      } else {
+        isPlaying = false;
+        btn.innerText = "AVVIA RADAR GPS";
+        btn.style.background = "linear-gradient(135deg, #00ffcc, #0099ff)";
+        btn.style.boxShadow = "0 4px 15px rgba(0, 255, 204, 0.4)";
+        
+        if (watchId) navigator.geolocation.clearWatch(watchId);
+        addLog("Radar disattivato.", "info");
       }
     }
 
-    function getZombieSpeed(type) {
-      let baseSpeed = 0.000005; 
-      if (type === 'runner') return baseSpeed * 1.5; 
-      if (type === 'tank') return baseSpeed * 0.5;   
-      return baseSpeed;
+    // --- GEOLOCALIZZAZIONE GPS REALE ---
+    function startTracking() {
+      if ('geolocation' in navigator) {
+        watchId = navigator.geolocation.watchPosition(
+          (pos) => {
+            const { latitude, longitude, speed, accuracy } = pos.coords;
+            const newPos = [latitude, longitude];
+            
+            // Calcolo velocità manuale se l'API non la passa
+            let currentSpeed = speed;
+            const now = Date.now();
+            
+            if (currentSpeed === null && lastPosition && lastTimestamp) {
+              const dist = getDistance(lastPosition, newPos); // in metri
+              const timeDiff = (now - lastTimestamp) / 1000; // in secondi
+              if (timeDiff > 0) {
+                currentSpeed = dist / timeDiff; // m/s
+              }
+            }
+
+            lastPosition = newPos;
+            lastTimestamp = now;
+
+            updatePlayerLocation(newPos, currentSpeed, accuracy);
+          },
+          (err) => {
+            addLog(`Errore GPS (${err.code}): ${err.message}`, "danger");
+          },
+          { 
+            enableHighAccuracy: true, 
+            maximumAge: 1000, 
+            timeout: 10000 
+          }
+        );
+      } else {
+        addLog("Geolocalizzazione non supportata su questo browser.", "danger");
+      }
     }
 
-    function getDistanceMeters(lat1, lon1, lat2, lon2) {
-      const R = 6371000;
-      const dLat = (lat2 - lat1) * Math.PI / 180;
-      const dLon = (lon2 - lon1) * Math.PI / 180;
-      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                Math.sin(dLon/2) * Math.sin(dLon/2);
+    function updatePlayerLocation(newPos, speedMs, accuracy = 20) {
+      playerPos = newPos;
+      playerMarker.setLatLng(playerPos);
+      accuracyCircle.setLatLng(playerPos);
+      accuracyCircle.setRadius(accuracy);
+      map.panTo(playerPos);
+
+      // Conversione da m/s a km/h
+      const speedKmH = speedMs ? (speedMs * 3.6).toFixed(1) : "0.0";
+      document.getElementById('speed-val').innerText = speedKmH;
+
+      checkCollisions();
+    }
+
+    // --- ALGORITMO DISTANZA HARVESINE (in Metri) ---
+    function getDistance(coords1, coords2) {
+      const R = 6371e3; // Raggio terra in metri
+      const lat1 = coords1[0] * Math.PI / 180;
+      const lat2 = coords2[0] * Math.PI / 180;
+      const deltaLat = (coords2[0] - coords1[0]) * Math.PI / 180;
+      const deltaLng = (coords2[1] - coords1[1]) * Math.PI / 180;
+
+      const a = Math.sin(deltaLat/2) * Math.sin(deltaLat/2) +
+                Math.cos(lat1) * Math.cos(lat2) *
+                Math.sin(deltaLng/2) * Math.sin(deltaLng/2);
+      
       const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
       return R * c;
     }
 
-    function initApp() {
-      playerPos = [41.9028, 12.4964];
-      map = L.map('map', { zoomControl: false, attributionControl: false }).setView(playerPos, 15);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+    // --- GAME LOOP & SPAWNING ---
+    function gameLoop() {
+      if (!isPlaying) return;
 
-      const playerIcon = L.divIcon({ className: 'player-icon', html: '', iconSize: [20, 20], iconAnchor: [10, 10] });
-      playerMarker = L.marker(playerPos, { icon: playerIcon }).addTo(map);
-
-      renderHistory();
-
-      if (navigator.geolocation) {
-        navigator.geolocation.watchPosition(
-          (pos) => {
-            let now = Date.now();
-            let newPos = [pos.coords.latitude, pos.coords.longitude];
-
-            let calculatedSpeed = 0;
-            if (pos.coords.speed !== null && pos.coords.speed !== undefined && !isNaN(pos.coords.speed) && pos.coords.speed >= 0) {
-              calculatedSpeed = Math.round(pos.coords.speed * 3.6);
-            } else if (lastGPSPos && lastGPSTime) {
-              let distMeters = getDistanceMeters(lastGPSPos[0], lastGPSPos[1], newPos[0], newPos[1]);
-              let timeSec = (now - lastGPSTime) / 1000;
-              if (timeSec > 0 && distMeters > 0.5) {
-                calculatedSpeed = Math.round((distMeters / timeSec) * 3.6);
-              }
-            }
-
-            if (calculatedSpeed > maxSpeedReached) maxSpeedReached = calculatedSpeed;
-
-            lastGPSPos = newPos;
-            lastGPSTime = now;
-            playerPos = newPos;
-
-            playerMarker.setLatLng(playerPos);
-            map.panTo(playerPos);
-            gpsAcquired = true;
-
-            let status1 = document.getElementById('gps-status-1');
-            let status2 = document.getElementById('gps-status-2');
-            status1.classList.add('ok');
-            status2.classList.add('ok');
-            status1.innerText = "HIGH ACCURACY GPS LOCKED ✓";
-            status2.innerText = "HIGH ACCURACY GPS LOCKED ✓";
-
-            if (gameStarted) {
-              document.getElementById('speed-val').innerText = calculatedSpeed;
-              document.getElementById('dev-panel').style.display = 'none';
-            }
-          },
-          (err) => {
-            document.getElementById('gps-status-1').innerText = "Please enable GPS!";
-            document.getElementById('gps-status-2').innerText = "Please enable GPS!";
-          },
-          { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
-        );
-      }
-    }
-
-    function goToSetup() {
-      initAudio();
-      document.getElementById('start-menu').style.display = 'none';
-      document.getElementById('setup-menu').style.display = 'flex';
-    }
-
-    function selectOpt(btn, category, value) {
-      config[category] = value;
-      btn.parentElement.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-    }
-
-    function spawnZombie(type) {
-      if(!playerPos) return;
-      let angle = Math.random() * Math.PI * 2;
-      let distanceMeters = 80 + Math.random() * 80;
-
-      let offsetLat = (distanceMeters / 111000) * Math.sin(angle);
-      let offsetLng = (distanceMeters / (111000 * Math.cos(playerPos[0] * Math.PI / 180))) * Math.cos(angle);
-
-      let zPos = [playerPos[0] + offsetLat, playerPos[1] + offsetLng];
-
-      let cssClass = 'z-walker', dmg = 1, size = 16;
-      if(type === 'runner') { cssClass = 'z-runner'; size = 14; }
-      if(type === 'tank') { cssClass = 'z-tank'; dmg = 2; size = 22; }
-
-      const zIcon = L.divIcon({ className: cssClass, html: '', iconSize: [size, size], iconAnchor: [size/2, size/2] });
-      let marker = L.marker(zPos, { icon: zIcon }).addTo(map);
-
-      zombies.push({ marker: marker, pos: zPos, speed: getZombieSpeed(type), damage: dmg });
-      totalZombiesSpawned++;
-    }
-
-    function spawnCrate() {
-      if(!playerPos) return;
-      let angle = Math.random() * Math.PI * 2;
-      let dist = 40 + Math.random() * 60;
-      let offsetLat = (dist / 111000) * Math.sin(angle);
-      let offsetLng = (dist / (111000 * Math.cos(playerPos[0] * Math.PI / 180))) * Math.cos(angle);
-
-      let cPos = [playerPos[0] + offsetLat, playerPos[1] + offsetLng];
-      const cIcon = L.divIcon({ className: 'crate-icon', html: '', iconSize: [16, 16], iconAnchor: [8, 8] });
-      let marker = L.marker(cPos, { icon: cIcon }).addTo(map);
-      crates.push({ marker: marker, pos: cPos });
-    }
-
-    function setupEnvironmentZones() {
-      // SAFE ZONE (Cerchio Blu)
-      let angle = Math.random() * Math.PI * 2;
-      let dist = 60 + Math.random() * 50;
-      let offsetLat = (dist / 111000) * Math.sin(angle);
-      let offsetLng = (dist / (111000 * Math.cos(playerPos[0] * Math.PI / 180))) * Math.cos(angle);
-      let szPos = [playerPos[0] + offsetLat, playerPos[1] + offsetLng];
-      
-      let safeCircle = L.circle(szPos, { color: '#00a8ff', fillColor: '#00a8ff', fillOpacity: 0.25, radius: 25 }).addTo(map);
-      safeZones.push({ circle: safeCircle, pos: szPos, radius: 25 });
-
-      // DANGER ZONE (Cerchio Rosso)
-      angle = Math.random() * Math.PI * 2;
-      dist = 100 + Math.random() * 80;
-      offsetLat = (dist / 111000) * Math.sin(angle);
-      offsetLng = (dist / (111000 * Math.cos(playerPos[0] * Math.PI / 180))) * Math.cos(angle);
-      let dzPos = [playerPos[0] + offsetLat, playerPos[1] + offsetLng];
-
-      let dangerCircle = L.circle(dzPos, { color: '#ff4757', fillColor: '#ff4757', fillOpacity: 0.3, radius: 35 }).addTo(map);
-      dangerZones.push({ circle: dangerCircle, pos: dzPos, radius: 35 });
-    }
-
-    function setupExits() {
-      let targetMeters = exitDistances[config.diff];
-      let randomBaseAngle = Math.random() * Math.PI * 2;
-      let angles = [randomBaseAngle, (randomBaseAngle + Math.PI) % (Math.PI * 2)];
-      let trackerHTML = '';
-
-      for (let i = 0; i < config.exits; i++) {
-        let angleRad = angles[i];
-        
-        let dy = targetMeters * Math.cos(angleRad);
-        let dx = targetMeters * Math.sin(angleRad);
-
-        let eLat = playerPos[0] + (dy / 111111);
-        let eLng = playerPos[1] + (dx / (111111 * Math.cos(playerPos[0] * Math.PI / 180)));
-        let ePos = [eLat, eLng];
-
-        const exitIcon = L.divIcon({ className: 'exit-icon', html: 'E', iconSize: [28, 28], iconAnchor: [14, 14] });
-        let marker = L.marker(ePos, { icon: exitIcon }).addTo(map);
-        exits.push({ marker: marker, pos: ePos, id: i });
-
-        trackerHTML += `
-          <div class="tracker-item">
-            <span id="arrow-exit-${i}" class="arrow-icon">⬆</span>
-            <span id="dist-exit-${i}">--</span>
-          </div>
-        `;
+      // Generazione nemici/risorse periodica
+      if (Math.random() < 0.4 && zombies.length < 8) {
+        spawnZombie();
       }
 
-      document.getElementById('tracker-container').innerHTML = trackerHTML;
-    }
-
-    function deployDecoy() {
-      if (decoyCount <= 0 || activeDecoy || isGameOver || !gameStarted) return;
-      decoyCount--;
-      document.getElementById('decoy-count').innerText = decoyCount;
-      if (decoyCount === 0) document.getElementById('decoy-btn-ui').disabled = true;
-
-      playSoundEffect('decoy');
-      let dPos = [...playerPos];
-      const dIcon = L.divIcon({ className: 'decoy-icon', html: '', iconSize: [18, 18], iconAnchor: [9, 9] });
-      let marker = L.marker(dPos, { icon: dIcon }).addTo(map);
-
-      activeDecoy = { marker: marker, pos: dPos };
-
-      setTimeout(() => {
-        if (activeDecoy) {
-          map.removeLayer(activeDecoy.marker);
-          activeDecoy = null;
-        }
-      }, 10000);
-    }
-
-    function launchGame() {
-      if (!gpsAcquired) {
-        alert("Wait for GPS lock before starting!");
-        return;
+      if (Math.random() < 0.25 && lootBoxes.length < 4) {
+        spawnLoot();
       }
 
-      initAudio();
-      gameStarted = true;
-      startPos = [...playerPos];
-      lives = config.lives;
-      maxLives = config.lives;
-      decoyCount = 2;
-      document.getElementById('decoy-count').innerText = decoyCount;
-      updateLivesUI();
+      moveZombies();
+      checkCollisions();
+      updateUI();
+      saveGameState();
 
-      document.getElementById('setup-menu').style.display = 'none';
-
-      map.invalidateSize();
-      map.setView(playerPos, 16);
-
-      setupExits();
-      setupEnvironmentZones();
-      for(let i = 0; i < config.count; i++) spawnZombie('walker');
-      spawnCrate();
-
-      gameLoopInterval = setInterval(updateGameLoop, 200);
-
-      timerInterval = setInterval(() => {
-        if(isGameOver) return;
-        timeSurvived++;
-        let min = String(Math.floor(timeSurvived / 60)).padStart(2, '0');
-        let sec = String(timeSurvived % 60).padStart(2, '0');
-        document.getElementById('timer').innerText = `${min}:${sec}`;
-        score += wave * 5;
-        document.getElementById('score').innerText = `SCORE: ${score}`;
-      }, 1000);
-
-      waveInterval = setInterval(() => {
-        wave++;
-        document.getElementById('wave-txt').innerText = `WAVE ${wave}`;
-        spawnZombie('walker');
-        if(wave % 2 === 0) spawnZombie('runner');
-        if(wave % 3 === 0) spawnZombie('tank');
-      }, 30000);
-
-      crateInterval = setInterval(spawnCrate, 35000);
-
-      // RADAR AUDIO
-      radarInterval = setInterval(() => {
-        if (isGameOver) return;
-        let closestZombie = 9999;
-        zombies.forEach(z => {
-          let d = getDistanceMeters(playerPos[0], playerPos[1], z.pos[0], z.pos[1]);
-          if (d < closestZombie) closestZombie = d;
-        });
-
-        if (closestZombie < 30) {
-          playBeep(700, 0.05);
-        } else if (closestZombie < 60) {
-          playBeep(450, 0.05);
-        }
-      }, 1200);
+      setTimeout(gameLoop, 3000);
     }
 
-    function updateGameLoop() {
-      if (isGameOver || !gameStarted) return;
+    function spawnZombie() {
+      // Offset casuale attorno al player (~50m - 150m)
+      const angle = Math.random() * Math.PI * 2;
+      const dist = 0.0005 + Math.random() * 0.001;
+      const zPos = [playerPos[0] + Math.sin(angle) * dist, playerPos[1] + Math.cos(angle) * dist];
 
-      let inSafeZone = false;
-      safeZones.forEach(sz => {
-        let d = getDistanceMeters(playerPos[0], playerPos[1], sz.pos[0], sz.pos[1]);
-        if (d <= sz.radius) inSafeZone = true;
-      });
+      const zMarker = L.circleMarker(zPos, {
+        color: '#ff0055',
+        fillColor: '#ff0055',
+        fillOpacity: 0.7,
+        radius: 7,
+        weight: 2
+      }).addTo(map);
 
-      dangerZones.forEach(dz => {
-        let d = getDistanceMeters(playerPos[0], playerPos[1], dz.pos[0], dz.pos[1]);
-        if (d <= dz.radius && Math.random() < 0.05) {
-          lives -= 1;
-          playSoundEffect('hit');
-          updateLivesUI();
-        }
-      });
+      zombies.push({ marker: zMarker, pos: zPos });
+      addLog("Segnale ostile rilevato nelle vicinanze!", "danger");
+      playAlarmSound();
+    }
 
-      let targetPos = activeDecoy ? activeDecoy.pos : playerPos;
+    function spawnLoot() {
+      const angle = Math.random() * Math.PI * 2;
+      const dist = 0.0003 + Math.random() * 0.0008;
+      const lPos = [playerPos[0] + Math.sin(angle) * dist, playerPos[1] + Math.cos(angle) * dist];
 
-      let closestZombieDist = 99999;
-      let closestExitDist = 99999;
+      const lMarker = L.circleMarker(lPos, {
+        color: '#ffcc00',
+        fillColor: '#ffcc00',
+        fillOpacity: 0.8,
+        radius: 6,
+        weight: 2
+      }).addTo(map);
 
+      lootBoxes.push({ marker: lMarker, pos: lPos });
+      addLog("Cassa di rifornimenti avvistata sul radar.", "info");
+    }
+
+    // Movimento automatico degli zombie verso il giocatore
+    function moveZombies() {
       zombies.forEach((z) => {
-        let dLat = targetPos[0] - z.pos[0];
-        let dLng = targetPos[1] - z.pos[1];
-        let len = Math.hypot(dLat, dLng);
-
-        if (len > 0) {
-          z.pos[0] += (dLat / len) * z.speed;
-          z.pos[1] += (dLng / len) * z.speed;
-          z.marker.setLatLng(z.pos);
-        }
-
-        let distToPlayer = getDistanceMeters(playerPos[0], playerPos[1], z.pos[0], z.pos[1]);
-        if (distToPlayer < closestZombieDist) closestZombieDist = distToPlayer;
-
-        if (distToPlayer < 10 && !inSafeZone) {
-          lives -= z.damage;
-          playSoundEffect('hit');
-          updateLivesUI();
-          let angle = Math.random() * Math.PI * 2;
-          let offsetLat = (100 / 111000) * Math.sin(angle);
-          let offsetLng = (100 / (111000 * Math.cos(playerPos[0] * Math.PI / 180))) * Math.cos(angle);
-          z.pos = [playerPos[0] + offsetLat, playerPos[1] + offsetLng];
-        }
+        const dLat = (playerPos[0] - z.pos[0]) * 0.15;
+        const dLng = (playerPos[1] - z.pos[1]) * 0.15;
+        z.pos = [z.pos[0] + dLat, z.pos[1] + dLng];
+        z.marker.setLatLng(z.pos);
       });
+    }
 
-      exits.forEach((e) => {
-        let dLat = e.pos[0] - playerPos[0];
-        let dLng = e.pos[1] - playerPos[1];
-        let dist = getDistanceMeters(playerPos[0], playerPos[1], e.pos[0], e.pos[1]);
-        if (dist < closestExitDist) closestExitDist = dist;
+    // --- LOGICA DI COLLISIONE ED EVENTI ---
+    function checkCollisions() {
+      if (!isPlaying) return;
 
-        let angleDeg = Math.atan2(dLng, dLat) * (180 / Math.PI);
-        
-        let arrowElem = document.getElementById(`arrow-exit-${e.id}`);
-        let distElem = document.getElementById(`dist-exit-${e.id}`);
+      // Check Zombie Damage
+      for (let i = zombies.length - 1; i >= 0; i--) {
+        const dist = getDistance(playerPos, zombies[i].pos);
+        if (dist < 15) { // Meno di 15 metri dal nemico
+          playerHp -= 15;
+          addLog("ATTACCO ZOMBIE! Hai subito 15 danni!", "danger");
+          playAlarmSound();
+          
+          map.removeLayer(zombies[i].marker);
+          zombies.splice(i, 1);
 
-        if (arrowElem && distElem) {
-          arrowElem.style.transform = `rotate(${angleDeg}deg)`;
-          distElem.innerText = dist >= 1000 ? (dist / 1000).toFixed(1) + 'km' : Math.round(dist) + 'm';
+          if (playerHp <= 0) {
+            gameOver();
+            return;
+          }
         }
+      }
 
-        if (dist < 20) {
-          isGameOver = true;
-          clearInterval(gameLoopInterval);
-          playSoundEffect('win');
-          saveRunHistory(true);
-          alert(`YOU ESCAPED!\nSuccessful Run!\nFinal Score: ${score}`);
-          location.reload();
+      // Check Loot Pickup
+      for (let i = lootBoxes.length - 1; i >= 0; i--) {
+        const dist = getDistance(playerPos, lootBoxes[i].pos);
+        if (dist < 18) { // Meno di 18 metri per raccogliere
+          medkits++;
+          score += 50;
+          addLog("Rifornimento raccolto: +1 Medkit, +50 Punti!", "success");
+          playLootSound();
+
+          map.removeLayer(lootBoxes[i].marker);
+          lootBoxes.splice(i, 1);
         }
-      });
+      }
 
-      crates.forEach((c, index) => {
-        let dist = getDistanceMeters(playerPos[0], playerPos[1], c.pos[0], c.pos[1]);
-        if (dist < 15) {
-          map.removeLayer(c.marker);
-          crates.splice(index, 1);
-          if (lives < maxLives) lives++;
-          score += 200;
-          playSoundEffect('pickup');
-          updateLivesUI();
-        }
-      });
+      updateUI();
+    }
 
-      document.getElementById('threat-dist').innerText = closestZombieDist < 1000 ? Math.round(closestZombieDist) + 'm' : '--';
+    function useMedkit() {
+      if (medkits > 0 && playerHp < 100) {
+        medkits--;
+        playerHp = Math.min(100, playerHp + 30);
+        addLog("Medkit utilizzato: +30 HP recuperati.", "success");
+        playLootSound();
+        updateUI();
+      }
+    }
+
+    function updateUI() {
+      document.getElementById('hp-bar').style.width = `${playerHp}%`;
+      document.getElementById('zombie-count').innerText = zombies.length;
+      document.getElementById('medkit-count').innerText = medkits;
+      document.getElementById('score-val').innerText = score;
+
+      const useBtn = document.getElementById('use-kit-btn');
+      useBtn.disabled = (medkits <= 0 || playerHp >= 100);
+    }
+
+    function gameOver() {
+      isPlaying = false;
+      playerHp = 0;
+      updateUI();
+      addLog("SEI MORTO. Sopravvivenza terminata.", "danger");
       
-      if (closestExitDist >= 1000) {
-        document.getElementById('exit-dist').innerText = (closestExitDist / 1000).toFixed(1) + 'km';
-      } else {
-        document.getElementById('exit-dist').innerText = Math.round(closestExitDist) + 'm';
-      }
+      const btn = document.getElementById('start-btn');
+      btn.innerText = "PARTITA FINITA";
+      btn.style.background = "#444";
+      btn.onclick = () => location.reload();
+
+      alert(`Game Over! Punteggio finale: ${score}`);
     }
 
-    function updateLivesUI() {
-      let hearts = '';
-      for (let i = 0; i < lives; i++) hearts += '♥';
-      document.getElementById('lives-display').innerText = hearts || 'DEAD';
-      if (lives <= 0) {
-        isGameOver = true;
-        clearInterval(gameLoopInterval);
-        saveRunHistory(false);
-        alert(`GAME OVER!\nFinal Score: ${score}`);
-        location.reload();
-      }
-    }
-
-    function saveRunHistory(victory) {
-      let history = JSON.parse(localStorage.getItem('zombie_escape_history') || '[]');
-      let newRun = {
-        id: Date.now(),
-        date: new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-        victory: victory,
-        mode: config.diff,
-        startPos: startPos,
-        endPos: [...playerPos],
-        maxSpeed: maxSpeedReached,
-        zombiesSpawned: totalZombiesSpawned
-      };
-      history.unshift(newRun);
-      localStorage.setItem('zombie_escape_history', JSON.stringify(history.slice(0, 10)));
-    }
-
-    function renderHistory() {
-      let history = JSON.parse(localStorage.getItem('zombie_escape_history') || '[]');
-      let container = document.getElementById('history-list');
-      if (history.length === 0) return;
-
-      container.innerHTML = '';
-      history.forEach((run, index) => {
-        let card = document.createElement('div');
-        card.className = 'history-card';
-        card.innerHTML = `
-          <div class="history-card-header">
-            <span>${run.victory ? 'VICTORY 🏆' : 'DEFEAT 💀'} (${run.mode})</span>
-            <span style="color:#888; font-size:11px;">${run.date}</span>
-          </div>
-          <div id="hist-map-${index}" class="history-map"></div>
-          <div class="history-stats">
-            <div>MODE<strong>${run.mode}</strong></div>
-            <div>MAX SPEED<strong>${run.maxSpeed} km/h</strong></div>
-            <div>ZOMBIES<strong>${run.zombiesSpawned}</strong></div>
-          </div>
-        `;
-        container.appendChild(card);
-
-        setTimeout(() => {
-          let hMap = L.map(`hist-map-${index}`, { zoomControl: false, attributionControl: false, dragging: false, touchZoom: false, scrollWheelZoom: false }).setView(run.startPos, 14);
-          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(hMap);
-
-          const startIcon = L.divIcon({ className: 'start-icon', html: '', iconSize: [14, 14], iconAnchor: [7, 7] });
-          const endIcon = L.divIcon({ className: 'end-icon', html: '', iconSize: [14, 14], iconAnchor: [7, 7] });
-
-          L.marker(run.startPos, { icon: startIcon }).addTo(hMap);
-          L.marker(run.endPos, { icon: endIcon }).addTo(hMap);
-
-          let bounds = L.latLngBounds([run.startPos, run.endPos]);
-          hMap.fitBounds(bounds, { padding: [20, 20] });
-        }, 100);
-      });
-    }
-
-    function moveSim(lat, lng) {
-      if(isGameOver) return;
-
-      playerPos[0] += lat;
-      playerPos[1] += lng;
-      playerMarker.setLatLng(playerPos);
-      map.panTo(playerPos);
-
-      let simSpeed = 25;
-      if (simSpeed > maxSpeedReached) maxSpeedReached = simSpeed;
-      document.getElementById('speed-val').innerText = simSpeed;
+    // --- FUNZIONI DI SIMULAZIONE E UTILITÀ ---
+    function moveSim(dLat, dLng) {
+      const newLat = playerPos[0] + dLat;
+      const newLng = playerPos[1] + dLng;
+      
+      updatePlayerLocation([newLat, newLng], 1.4, 10);
 
       clearTimeout(speedTimeout);
       speedTimeout = setTimeout(() => {
-        document.getElementById('speed-val').innerText = "0";
-      }, 1000);
+        document.getElementById('speed-val').innerText = "0.0";
+      }, 1500);
     }
 
-    window.onload = initApp;
+    function centerMap() {
+      if (map && playerPos) {
+        map.panTo(playerPos);
+      }
+    }
+
+    // --- SALVATAGGIO STATO LOCALE ---
+    function saveGameState() {
+      const state = {
+        hp: playerHp,
+        score: score,
+        medkits: medkits
+      };
+      localStorage.setItem('zombie_gps_state', JSON.stringify(state));
+    }
+
+    function loadGameState() {
+      const saved = localStorage.getItem('zombie_gps_state');
+      if (saved) {
+        try {
+          const data = JSON.parse(saved);
+          playerHp = data.hp || 100;
+          score = data.score || 0;
+          medkits = data.medkits || 1;
+          updateUI();
+        } catch(e) {}
+      }
+    }
+
+    // Inizializza l'applicazione al caricamento
+    window.onload = initMap;
   </script>
 </body>
 </html>
