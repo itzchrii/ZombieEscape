@@ -229,7 +229,7 @@
 
     <div class="section-label">1. Difficulty & Exit Distance</div>
     <div class="opt-grid">
-      <div class="opt-btn active" onclick="selectOpt(this, 'diff', 'EASY')">SHORT<br><small>(800m)</small></div>
+      <div class="opt-btn active" onclick="selectOpt(this, 'diff', 'EASY')">SHORT<br><small>(500m)</small></div>
       <div class="opt-btn" onclick="selectOpt(this, 'diff', 'MEDIUM')">TOWN<br><small>(1.8 km)</small></div>
       <div class="opt-btn" onclick="selectOpt(this, 'diff', 'HARDCORE')">BORDER<br><small>(3.5 km)</small></div>
     </div>
@@ -320,11 +320,10 @@
 
     let config = { diff: 'EASY', exits: 1, lives: 3, count: 6 };
     
-    // Distanze scalate per un paese di ~25km2 (~5km di raggio max)
-    const exitDistances = { EASY: 800, MEDIUM: 1800, HARDCORE: 3500 };
+    // Distanze scalate per un paese di ~25km2 (~5km di diametro max)
+    const exitDistances = { EASY: 500, MEDIUM: 1800, HARDCORE: 3500 };
 
     function getZombieSpeed(type) {
-      // Proporzione di calcolo: 0.000005 gradi di movimento ≈ 10 km/h reali
       let baseSpeed = 0.000005; // Walker: 10 km/h
       if (type === 'runner') return baseSpeed * 1.5; // Runner: 15 km/h
       if (type === 'tank') return baseSpeed * 0.5;   // Tank: 5 km/h
@@ -414,7 +413,6 @@
     function spawnZombie(type) {
       if(!playerPos) return;
       let angle = Math.random() * Math.PI * 2;
-      // Spawn proporzionato alla grandezza della mappa (tra 120m e 250m dal giocatore)
       let distanceMeters = 120 + Math.random() * 130;
 
       let offsetLat = (distanceMeters / 111000) * Math.sin(angle);
@@ -451,11 +449,13 @@
       let latOffset = targetMeters / 111000;
       let lngOffset = targetMeters / (111000 * Math.cos(playerPos[0] * Math.PI / 180));
 
-      let angles = [45, 225];
+      // Angolo iniziale casuale a 360° per evitare che l'uscita compaia sempre nello stesso punto
+      let randomBaseAngle = Math.random() * 360;
+      let angles = [randomBaseAngle, (randomBaseAngle + 180) % 360];
       let trackerHTML = '';
 
       for (let i = 0; i < config.exits; i++) {
-        let angleRad = (angles[i] + (Math.random() * 20 - 10)) * (Math.PI / 180);
+        let angleRad = angles[i] * (Math.PI / 180);
         let eLat = playerPos[0] + (latOffset * Math.sin(angleRad));
         let eLng = playerPos[1] + (lngOffset * Math.cos(angleRad));
         let ePos = [eLat, eLng];
@@ -670,7 +670,6 @@
       playerMarker.setLatLng(playerPos);
       map.panTo(playerPos);
 
-      // Con lo spostamento simulato di 0.0003 gradi la velocità del test simula ~25 km/h
       let simSpeed = 25;
       if (simSpeed > maxSpeedReached) maxSpeedReached = simSpeed;
       document.getElementById('speed-val').innerText = simSpeed;
@@ -680,6 +679,11 @@
         document.getElementById('speed-val').innerText = "0";
       }, 1000);
     }
+
+    window.onload = initApp;
+  </script>
+</body>
+</html>
 
     window.onload = initApp;
   </script>
