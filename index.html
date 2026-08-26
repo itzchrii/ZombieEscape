@@ -13,7 +13,7 @@
       position: fixed;
       top: 0; left: 0;
       width: 100vw; height: 100vh;
-      background: #0d0d0d;
+      background: rgba(13, 13, 13, 0.95);
       z-index: 99999;
       display: flex;
       flex-direction: column;
@@ -69,18 +69,17 @@
       box-shadow: 0 0 20px rgba(0, 255, 102, 0.4);
     }
 
-    #loading-screen {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100vw; height: 100vh;
-      background: rgba(0,0,0,0.95);
-      z-index: 999999;
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 15px;
+    .gps-status-banner {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 8px 12px;
+      margin-bottom: 15px;
+      text-align: center;
+      font-size: 12px;
+      color: #ffa502;
     }
+    .gps-status-banner.ok { border-color: #00FF66; color: #00FF66; }
 
     #map { width: 100vw; height: 100vh; position: absolute; top:0; left:0; z-index: 1; background: #111; }
     
@@ -140,22 +139,18 @@
 </head>
 <body>
 
-  <!-- SCHERMATA ATTESA GPS -->
-  <div id="loading-screen">
-    <div style="color: #00FF66; font-size: 20px; font-weight: bold;">AGGANCIAMENTO GPS...</div>
-    <div style="color: #888; font-size: 13px;">Assicurati che la geolocalizzazione sia attiva</div>
-  </div>
-
   <!-- MENU START -->
   <div id="start-menu" class="menu-screen">
     <div class="title">ZOMBIE ESCAPE</div>
     <div class="subtitle">Survival GPS in Tempo Reale</div>
 
+    <div id="gps-status-1" class="gps-status-banner">Ricerca Posizione GPS in corso...</div>
+
     <div class="section-label">Legenda Elementi</div>
     <div class="legend-box">
       <div class="legend-item">
         <div class="exit-icon-demo">E</div>
-        <div><strong>USCITA:</strong> Raggiungila per vincere ed fuggire!</div>
+        <div><strong>USCITA:</strong> Raggiungila per vincere!</div>
       </div>
       <div class="legend-item">
         <div class="z-walker-demo"></div>
@@ -178,6 +173,8 @@
   <div id="setup-menu" class="menu-screen" style="display: none;">
     <div class="title">CONFIGURAZIONE</div>
     <div class="subtitle">Imposta la tua partita</div>
+
+    <div id="gps-status-2" class="gps-status-banner">Ricerca Posizione GPS in corso...</div>
 
     <div class="section-label">1. Difficolt&agrave; e Distanza Uscita</div>
     <div class="opt-grid">
@@ -255,17 +252,17 @@
   <script>
     let map, playerMarker;
     let playerPos = null;
+    let gpsAcquired = false;
     let zombies = [], crates = [], exits = [];
     let lives = 3, maxLives = 3, score = 0, timeSurvived = 0, wave = 1;
     let gameLoopInterval, waveInterval, crateInterval, timerInterval;
     let isGameOver = false;
-    let entitiesSpawned = false;
+    let gameStarted = false;
     let speedTimeout;
 
     let config = { diff: 'easy', exits: 1, lives: 3, count: 6 };
     const exitDistances = { easy: 500, medium: 1200, hard: 2500 };
 
-    // Velocità ridotta a passo d'uomo lento
     function getZombieSpeed(type) {
       let baseSpeed = 0.000004;
       if (type === 'runner') return baseSpeed * 1.3;
@@ -284,6 +281,51 @@
       return R * c;
     }
 
+    // INIZIALIZZA LA MAPPA E ATTIVA SUBITO IL GPS AL CARICAMENTO DELLA PAGINA
+    function initApp() {
+      // Posizione iniziale neutra
+      playerPos = [41.9028, 12.4964];
+      map = L.map('map', { zoomControl: false, attributionControl: false }).setView(playerPos, 16);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+
+      const playerIcon = L.divIcon({ className: 'player-icon', html: '', iconSize: [20, 20], iconAnchor: [10, 10] });
+      playerMarker = L.marker(playerPos, { icon: playerIcon }).addTo(map);
+
+      // ATTIVAZIONE IMMEDIATA DEL GPS SUL MENU
+      if (navigator.geolocation) {
+        navigator.geolocation.watchPosition(
+          (pos) => {
+            playerPos = [pos.coords.latitude, pos.coords.longitude];
+            playerMarker.setLatLng(playerPos);
+            map.panTo(playerPos);
+            gpsAcquired = true;
+
+            // Aggiorna grafica status GPS
+            let status1 = document.getElementById('gps-status-1');
+            let status2 = document.getElementById('gps-status-2');
+            status1.classList.add('ok');
+            status2.classList.add('ok');
+            status1.innerText = "GPS AGGANCIATO CORRETTAMENTE ✓";
+            status2.innerText = "GPS AGGANCIATO CORRETTAMENTE ✓";
+
+            if(gameStarted) {
+              let currentSpeed = 0;
+              if (pos.coords.speed !== null && pos.coords.speed !== undefined && !isNaN(pos.coords.speed)) {
+                currentSpeed = Math.round(pos.coords.speed * 3.6);
+              }
+              document.getElementById('speed-val').innerText = currentSpeed;
+              document.getElementById('dev-panel').style.display = 'none';
+            }
+          },
+          (err) => {
+            document.getElementById('gps-status-1').innerText = "Attiva il GPS nel browser!";
+            document.getElementById('gps-status-2').innerText = "Attiva il GPS nel browser!";
+          },
+          { enableHighAccuracy: true }
+        );
+      }
+    }
+
     function goToSetup() {
       document.getElementById('start-menu').style.display = 'none';
       document.getElementById('setup-menu').style.display = 'flex';
@@ -295,20 +337,8 @@
       btn.classList.add('active');
     }
 
-    function initMap() {
-      // Posizione temporanea di avvio mappa
-      playerPos = [45.4642, 9.1900];
-      map = L.map('map', { zoomControl: false, attributionControl: false }).setView(playerPos, 16);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
-
-      const playerIcon = L.divIcon({ className: 'player-icon', html: '', iconSize: [20, 20], iconAnchor: [10, 10] });
-      playerMarker = L.marker(playerPos, { icon: playerIcon }).addTo(map);
-    }
-
-    // SPAWN LONTANO: Sempre tra 100 metri e 200 metri dal giocatore
     function spawnZombie(type) {
       if(!playerPos) return;
-      
       let angle = Math.random() * Math.PI * 2;
       let distanceMeters = 100 + Math.random() * 100;
 
@@ -369,11 +399,23 @@
       document.getElementById('tracker-container').innerHTML = trackerHTML;
     }
 
-    function startEntities() {
-      if (entitiesSpawned) return;
-      entitiesSpawned = true;
+    function launchGame() {
+      if (!gpsAcquired) {
+        alert("Attendi un secondo che il GPS si agganci alla tua posizione reale!");
+        return;
+      }
 
-      // Genera Uscita e Zombie SOLO ADESSO basandosi sulle vere coordinate GPS
+      gameStarted = true;
+      lives = config.lives;
+      maxLives = config.lives;
+      updateLivesUI();
+
+      document.getElementById('setup-menu').style.display = 'none';
+
+      map.invalidateSize();
+      map.setView(playerPos, 16);
+
+      // ORA LE USCITE VENGONO SPARTITE DALLA TUA POSIZIONE IN PUGLIA
       setupExits();
       for(let i = 0; i < config.count; i++) spawnZombie('walker');
       spawnCrate();
@@ -402,7 +444,7 @@
     }
 
     function updateGameLoop() {
-      if (isGameOver || !entitiesSpawned) return;
+      if (isGameOver || !gameStarted) return;
 
       let closestZombieDist = 99999;
       let closestExitDist = 99999;
@@ -487,56 +529,8 @@
       }
     }
 
-    function launchGame() {
-      lives = config.lives;
-      maxLives = config.lives;
-      updateLivesUI();
-
-      document.getElementById('setup-menu').style.display = 'none';
-      document.getElementById('loading-screen').style.display = 'flex';
-
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            document.getElementById('loading-screen').style.display = 'none';
-            playerPos = [pos.coords.latitude, pos.coords.longitude];
-            playerMarker.setLatLng(playerPos);
-            map.setView(playerPos, 16);
-            setTimeout(() => { map.invalidateSize(); }, 100);
-            
-            // AVVIA IL GIOCO SOLO DOPO AVERE LE COORDINATE REALI
-            startEntities();
-
-            navigator.geolocation.watchPosition((p) => {
-              if(isGameOver) return;
-              playerPos = [p.coords.latitude, p.coords.longitude];
-              playerMarker.setLatLng(playerPos);
-              map.panTo(playerPos);
-
-              let currentSpeed = 0;
-              if (p.coords.speed !== null && p.coords.speed !== undefined && !isNaN(p.coords.speed)) {
-                currentSpeed = Math.round(p.coords.speed * 3.6);
-              }
-              document.getElementById('speed-val').innerText = currentSpeed;
-              document.getElementById('dev-panel').style.display = 'none';
-            }, null, { enableHighAccuracy: true });
-          },
-          (err) => {
-            alert("Attiva il GPS e fai 'Consenti' nel browser per giocare!");
-            document.getElementById('loading-screen').style.display = 'none';
-            startEntities();
-          },
-          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-        );
-      } else {
-        document.getElementById('loading-screen').style.display = 'none';
-        startEntities();
-      }
-    }
-
     function moveSim(lat, lng) {
       if(isGameOver) return;
-      if (!entitiesSpawned) startEntities();
 
       playerPos[0] += lat;
       playerPos[1] += lng;
@@ -550,7 +544,7 @@
       }, 1000);
     }
 
-    window.onload = initMap;
+    window.onload = initApp;
   </script>
 </body>
 </html>
