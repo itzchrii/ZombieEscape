@@ -9,7 +9,6 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; user-select: none; }
     body, html { width: 100%; height: 100%; overflow: hidden; background: #000; color: #fff; }
     
-    /* SCHERMATE MENU */
     .menu-screen {
       position: fixed;
       top: 0; left: 0;
@@ -27,7 +26,6 @@
     
     .section-label { font-size: 11px; color: #aaa; font-weight: bold; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
 
-    /* LEGENDA START */
     .legend-box {
       background: #141414;
       border: 1px solid #222;
@@ -71,13 +69,11 @@
       box-shadow: 0 0 20px rgba(0, 255, 102, 0.4);
     }
 
-    /* MAPPA ED HUD */
     #map { width: 100vw; height: 100vh; position: absolute; top:0; left:0; z-index: 1; background: #111; }
     
     .hud { position: absolute; top:0; left:0; z-index: 100; pointer-events: none; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between; padding: 12px; }
     .hud-top { display: flex; justify-content: space-between; align-items: flex-start; width: 100%; }
     
-    /* INDICATORE FRECCIA USCITA */
     .exit-tracker-box {
       background: rgba(0, 0, 0, 0.9);
       padding: 8px 12px;
@@ -95,7 +91,6 @@
     .lives { color: #ff4757; font-size: 18px; letter-spacing: 2px; font-weight: bold; }
     .hud-center { text-align: center; background: rgba(0,0,0,0.9); padding: 6px 12px; border-radius: 10px; border: 1px solid #333; }
 
-    /* LAYOUT HUD IN BASSO */
     .hud-bottom { display: flex; justify-content: space-between; align-items: flex-end; width: 100%; gap: 6px; pointer-events: auto; }
     .metric-card { background: rgba(15, 23, 42, 0.95); border: 1px solid #333; padding: 8px 4px; border-radius: 10px; text-align: center; flex: 1; }
     
@@ -115,7 +110,6 @@
     .dev-controls { position: absolute; bottom: 85px; left: 50%; transform: translateX(-50%); z-index: 110; display: grid; grid-template-columns: repeat(3, 42px); gap: 4px; background: rgba(0,0,0,0.9); padding: 6px; border-radius: 10px; pointer-events: auto; }
     .dev-btn { background: #222; color: #00FF66; border: 1px solid #00FF66; width: 42px; height: 42px; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; }
 
-    /* STILI MARKER */
     .leaflet-marker-icon { overflow: visible !important; }
     .player-icon { width: 20px; height: 20px; background: #00FF66; border: 3px solid #fff; border-radius: 50%; box-shadow: 0 0 14px #00FF66; }
     
@@ -133,7 +127,7 @@
 </head>
 <body>
 
-  <!-- SCHERMATA 1: MENU START -->
+  <!-- 1. MENU START CON LEGENDA -->
   <div id="start-menu" class="menu-screen">
     <div class="title">ZOMBIE ESCAPE</div>
     <div class="subtitle">Survival GPS in Tempo Reale</div>
@@ -146,7 +140,7 @@
       </div>
       <div class="legend-item">
         <div class="z-walker-demo"></div>
-        <div><strong>WALKER:</strong> Zombie a passo d'uomo standard.</div>
+        <div><strong>WALKER:</strong> Zombie lento a passo d'uomo.</div>
       </div>
       <div class="legend-item">
         <div class="z-runner-demo"></div>
@@ -154,14 +148,14 @@
       </div>
       <div class="legend-item">
         <div class="z-tank-demo"></div>
-        <div><strong>TANK:</strong> Lento ma resistente (infligge 2 danni).</div>
+        <div><strong>TANK:</strong> Molto lento ma resistente (2 danni).</div>
       </div>
     </div>
 
     <button class="main-btn" onclick="goToSetup()">PLAY</button>
   </div>
 
-  <!-- SCHERMATA 2: MENU CONFIGURAZIONE -->
+  <!-- 2. MENU SELEZIONE (SOLO 1 O 3 VITE) -->
   <div id="setup-menu" class="menu-screen" style="display: none;">
     <div class="title">CONFIGURAZIONE</div>
     <div class="subtitle">Imposta la tua partita</div>
@@ -179,7 +173,6 @@
       <div class="opt-btn" onclick="selectOpt(this, 'exits', 2)">2 USCITE</div>
     </div>
 
-    <!-- MODIFICATO: SOLO 1 O 3 VITE -->
     <div class="section-label">3. Vite Iniziali</div>
     <div class="opt-grid">
       <div class="opt-btn" onclick="selectOpt(this, 'lives', 1)">1 VITA</div>
@@ -196,7 +189,7 @@
     <button class="main-btn" onclick="launchGame()">AVVIA ESCAPE</button>
   </div>
 
-  <!-- INTERFACCIA HUD -->
+  <!-- HUD MAPPA -->
   <div class="hud">
     <div class="hud-top">
       <div class="exit-tracker-box" id="tracker-container"></div>
@@ -213,10 +206,10 @@
     </div>
 
     <div class="dev-controls" id="dev-panel">
-      <div></div><button class="dev-btn" onclick="moveSim(0.0003, 0)">▲</button><div></div>
-      <button class="dev-btn" onclick="moveSim(0, -0.0003)">◄</button>
-      <button class="dev-btn" onclick="moveSim(-0.0003, 0)">▼</button>
-      <button class="dev-btn" onclick="moveSim(0, 0.0003)">►</button>
+      <div></div><button class="dev-btn" onclick="moveSim(0.00015, 0)">▲</button><div></div>
+      <button class="dev-btn" onclick="moveSim(0, -0.00015)">◄</button>
+      <button class="dev-btn" onclick="moveSim(-0.00015, 0)">▼</button>
+      <button class="dev-btn" onclick="moveSim(0, 0.00015)">►</button>
     </div>
 
     <div class="hud-bottom">
@@ -242,21 +235,26 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
     let map, playerMarker;
-    let playerPos = [45.4642, 9.1900];
+    let playerPos = null;
     let zombies = [], crates = [], exits = [];
     let lives = 3, maxLives = 3, score = 0, timeSurvived = 0, wave = 1;
     let gameLoopInterval, waveInterval, crateInterval, timerInterval;
     let isGameOver = false;
+    let gameStarted = false;
     let speedTimeout;
 
     let config = { diff: 'easy', exits: 1, lives: 3, count: 6 };
     
-    // Distanze reali in metri
     const exitDistances = { easy: 500, medium: 1200, hard: 2500 };
-    // Moltiplicatori velocita zombie ridotti a passo d'uomo
-    const diffSpeeds = { easy: 0.002, medium: 0.0035, hard: 0.005 };
 
-    // Calcolo distanza reale Haversine in metri tra due coordinate
+    // Velocità zombie (passo d'uomo molto lento)
+    function getZombieSpeed(type) {
+      let baseSpeed = 0.00002; // Circa 2-3 km/h
+      if (type === 'runner') return baseSpeed * 1.5;
+      if (type === 'tank') return baseSpeed * 0.6;
+      return baseSpeed;
+    }
+
     function getDistanceMeters(lat1, lon1, lat2, lon2) {
       const R = 6371000;
       const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -280,6 +278,8 @@
     }
 
     function initMap() {
+      // Posizione iniziale di default (Milano) finché non prende il GPS reale
+      playerPos = [45.4642, 9.1900];
       map = L.map('map', { zoomControl: false, attributionControl: false }).setView(playerPos, 16);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
@@ -288,22 +288,24 @@
     }
 
     function spawnZombie(type) {
-      let offsetLat = (Math.random() - 0.5) * 0.002;
-      let offsetLng = (Math.random() - 0.5) * 0.002;
+      if(!playerPos) return;
+      let offsetLat = (Math.random() - 0.5) * 0.0025;
+      let offsetLng = (Math.random() - 0.5) * 0.0025;
       let zPos = [playerPos[0] + offsetLat, playerPos[1] + offsetLng];
 
-      let cssClass = 'z-walker', speedFactor = 1, dmg = 1, size = 16;
-      if(type === 'runner') { cssClass = 'z-runner'; speedFactor = 1.6; size = 14; }
-      if(type === 'tank') { cssClass = 'z-tank'; speedFactor = 0.6; dmg = 2; size = 22; }
+      let cssClass = 'z-walker', dmg = 1, size = 16;
+      if(type === 'runner') { cssClass = 'z-runner'; size = 14; }
+      if(type === 'tank') { cssClass = 'z-tank'; dmg = 2; size = 22; }
 
       const zIcon = L.divIcon({ className: cssClass, html: '', iconSize: [size, size], iconAnchor: [size/2, size/2] });
       let marker = L.marker(zPos, { icon: zIcon }).addTo(map);
 
-      zombies.push({ marker: marker, pos: zPos, speed: diffSpeeds[config.diff] * speedFactor, damage: dmg });
+      zombies.push({ marker: marker, pos: zPos, speed: getZombieSpeed(type), damage: dmg });
     }
 
     function spawnCrate() {
-      let cPos = [playerPos[0] + (Math.random() - 0.5) * 0.0015, playerPos[1] + (Math.random() - 0.5) * 0.0015];
+      if(!playerPos) return;
+      let cPos = [playerPos[0] + (Math.random() - 0.5) * 0.002, playerPos[1] + (Math.random() - 0.5) * 0.002];
       const cIcon = L.divIcon({ className: 'crate-icon', html: '', iconSize: [16, 16], iconAnchor: [8, 8] });
       let marker = L.marker(cPos, { icon: cIcon }).addTo(map);
       crates.push({ marker: marker, pos: cPos });
@@ -311,7 +313,6 @@
 
     function setupExits() {
       let targetMeters = exitDistances[config.diff];
-      // Converti metri reali in gradi di latitudine/longitudine
       let latOffset = targetMeters / 111000;
       let lngOffset = targetMeters / (111000 * Math.cos(playerPos[0] * Math.PI / 180));
 
@@ -340,19 +341,22 @@
     }
 
     function updateGameLoop() {
-      if (isGameOver) return;
+      if (isGameOver || !gameStarted) return;
 
       let closestZombieDist = 99999;
       let closestExitDist = 99999;
 
-      // Inseguimento Zombie a passo d'uomo
+      // Inseguimento Zombie controllato a passo d'uomo
       zombies.forEach((z) => {
         let dLat = playerPos[0] - z.pos[0];
         let dLng = playerPos[1] - z.pos[1];
-        
-        z.pos[0] += dLat * z.speed;
-        z.pos[1] += dLng * z.speed;
-        z.marker.setLatLng(z.pos);
+        let len = Math.hypot(dLat, dLng);
+
+        if (len > 0) {
+          z.pos[0] += (dLat / len) * z.speed;
+          z.pos[1] += (dLng / len) * z.speed;
+          z.marker.setLatLng(z.pos);
+        }
 
         let dist = getDistanceMeters(playerPos[0], playerPos[1], z.pos[0], z.pos[1]);
         if (dist < closestZombieDist) closestZombieDist = dist;
@@ -360,11 +364,11 @@
         if (dist < 10) {
           lives -= z.damage;
           updateLivesUI();
-          z.pos = [playerPos[0] + (Math.random() - 0.5) * 0.002, playerPos[1] + (Math.random() - 0.5) * 0.002];
+          z.pos = [playerPos[0] + (Math.random() - 0.5) * 0.003, playerPos[1] + (Math.random() - 0.5) * 0.003];
         }
       });
 
-      // Calcolo Frecce ed Uscite
+      // Calcolo Frecce Uscite
       exits.forEach((e) => {
         let dLat = e.pos[0] - playerPos[0];
         let dLng = e.pos[1] - playerPos[1];
@@ -428,13 +432,14 @@
       updateLivesUI();
 
       document.getElementById('setup-menu').style.display = 'none';
-
       setTimeout(() => { map.invalidateSize(); }, 100);
 
+      // Aggiornamento posizione GPS reale
       if (navigator.geolocation) {
         navigator.geolocation.watchPosition(
           (pos) => {
             if(isGameOver) return;
+            let firstFix = !gameStarted;
             playerPos = [pos.coords.latitude, pos.coords.longitude];
             playerMarker.setLatLng(playerPos);
             map.panTo(playerPos);
@@ -445,18 +450,33 @@
             }
             document.getElementById('speed-val').innerText = currentSpeed;
             document.getElementById('dev-panel').style.display = 'none';
+
+            if (firstFix) {
+              gameStarted = true;
+              startEntities();
+            }
           },
-          (err) => console.log("Simulatore GPS attivo"),
+          (err) => {
+            console.log("GPS non disponibile. Uso tasti simulatore.");
+            if(!gameStarted) {
+              gameStarted = true;
+              startEntities();
+            }
+          },
           { enableHighAccuracy: true }
         );
+      } else {
+        gameStarted = true;
+        startEntities();
       }
+    }
 
+    function startEntities() {
       setupExits();
       for(let i = 0; i < config.count; i++) spawnZombie('walker');
       spawnCrate();
 
-      // Frequenza ridotta a 500ms per un movimento fluido ma bilanciato
-      gameLoopInterval = setInterval(updateGameLoop, 500);
+      gameLoopInterval = setInterval(updateGameLoop, 200);
 
       timerInterval = setInterval(() => {
         if(isGameOver) return;
@@ -474,19 +494,23 @@
         spawnZombie('walker');
         if(wave % 2 === 0) spawnZombie('runner');
         if(wave % 3 === 0) spawnZombie('tank');
-      }, 20000);
+      }, 25000);
 
-      crateInterval = setInterval(spawnCrate, 30000);
+      crateInterval = setInterval(spawnCrate, 35000);
     }
 
     function moveSim(lat, lng) {
       if(isGameOver) return;
+      if (!gameStarted) {
+        gameStarted = true;
+        startEntities();
+      }
       playerPos[0] += lat;
       playerPos[1] += lng;
       playerMarker.setLatLng(playerPos);
       map.panTo(playerPos);
 
-      document.getElementById('speed-val').innerText = "14";
+      document.getElementById('speed-val').innerText = "5";
       clearTimeout(speedTimeout);
       speedTimeout = setTimeout(() => {
         document.getElementById('speed-val').innerText = "0";
