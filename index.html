@@ -163,6 +163,28 @@
     .metric-value { font-size: 16px; font-weight: bold; color: #00FF66; }
     .metric-label { font-size: 8px; color: #aaa; text-transform: uppercase; margin-top: 2px; }
 
+    /* CONTROLLI ACTION (DECOY & DEV) */
+    .action-controls {
+      position: absolute;
+      bottom: 85px;
+      right: 12px;
+      z-index: 110;
+      pointer-events: auto;
+    }
+    .decoy-btn {
+      background: rgba(0, 168, 255, 0.2);
+      border: 2px solid #00a8ff;
+      color: #00a8ff;
+      font-weight: 900;
+      padding: 10px 14px;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(0, 168, 255, 0.4);
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+    .decoy-btn:disabled { opacity: 0.4; border-color: #555; color: #555; box-shadow: none; }
+
     .dev-controls { position: absolute; bottom: 85px; left: 50%; transform: translateX(-50%); z-index: 110; display: grid; grid-template-columns: repeat(3, 42px); gap: 4px; background: rgba(0,0,0,0.9); padding: 6px; border-radius: 10px; pointer-events: auto; }
     .dev-btn { background: #222; color: #00FF66; border: 1px solid #00FF66; width: 42px; height: 42px; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; }
 
@@ -175,7 +197,13 @@
     .z-runner-demo, .z-runner { width: 14px; height: 14px; background: #ffa502; border: 2px solid #000; border-radius: 50%; box-shadow: 0 0 8px #ffa502; display: inline-block; flex-shrink: 0; }
     .z-tank-demo, .z-tank { width: 22px; height: 22px; background: #a55eea; border: 2px solid #000; border-radius: 50%; box-shadow: 0 0 10px #a55eea; display: inline-block; flex-shrink: 0; }
     .crate-icon { width: 16px; height: 16px; background: #ffd32a; border: 2px solid #000; border-radius: 3px; box-shadow: 0 0 10px #ffd32a; }
+    .decoy-icon { width: 18px; height: 18px; background: #00a8ff; border: 2px solid #fff; border-radius: 50%; box-shadow: 0 0 15px #00a8ff; animation: pulse 0.8s infinite alternate; }
     
+    @keyframes pulse {
+      from { transform: scale(0.9); opacity: 0.8; }
+      to { transform: scale(1.2); opacity: 1; }
+    }
+
     .exit-icon-demo, .exit-icon {
       width: 28px; height: 28px; background: #00FF66; border: 2px solid #fff; border-radius: 50%;
       box-shadow: 0 0 15px #00FF66; color: #000; font-weight: 900; font-size: 15px;
@@ -272,6 +300,10 @@
       </div>
     </div>
 
+    <div class="action-controls">
+      <button id="decoy-btn-ui" class="decoy-btn" onclick="deployDecoy()">💨 DECOY (<span id="decoy-count">2</span>)</button>
+    </div>
+
     <div class="dev-controls" id="dev-panel">
       <div></div><button class="dev-btn" onclick="moveSim(0.0003, 0)">▲</button><div></div>
       <button class="dev-btn" onclick="moveSim(0, -0.0003)">◄</button>
@@ -305,12 +337,15 @@
     let playerPos = null;
     let startPos = null;
     let gpsAcquired = false;
-    let zombies = [], crates = [], exits = [];
+    let zombies = [], crates = [], exits = [], safeZones = [], dangerZones = [];
+    let activeDecoy = null;
+    let decoyCount = 2;
+
     let lives = 3, maxLives = 3, score = 0, timeSurvived = 0, wave = 1;
     let totalZombiesSpawned = 0;
     let maxSpeedReached = 0;
 
-    let gameLoopInterval, waveInterval, crateInterval, timerInterval;
+    let gameLoopInterval, waveInterval, crateInterval, timerInterval, radarInterval;
     let isGameOver = false;
     let gameStarted = false;
     let speedTimeout;
@@ -322,6 +357,47 @@
     
     // DISTANZE PRECISE: 250m, 500m, 800m
     const exitDistances = { EASY: 250, MEDIUM: 500, HARDCORE: 800 };
+
+    // AUDIO CONTEXT PER SUONI E RADAR
+    let audioCtx = null;
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+    }
+
+    function playBeep(freq, duration) {
+      if (!audioCtx) return;
+      try {
+        let osc = audioCtx.createOscillator();
+        let gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch(e) {}
+    }
+
+    function playSoundEffect(type) {
+      if (!audioCtx) return;
+      if (type === 'pickup') {
+        playBeep(600, 0.1);
+        setTimeout(() => playBeep(900, 0.15), 100);
+      } else if (type === 'hit') {
+        playBeep(150, 0.2);
+      } else if (type === 'win') {
+        playBeep(400, 0.1);
+        setTimeout(() => playBeep(600, 0.1), 100);
+        setTimeout(() => playBeep(800, 0.2), 200);
+      } else if (type === 'decoy') {
+        playBeep(300, 0.3);
+      }
+    }
 
     function getZombieSpeed(type) {
       let baseSpeed = 0.000005; 
@@ -400,6 +476,7 @@
     }
 
     function goToSetup() {
+      initAudio();
       document.getElementById('start-menu').style.display = 'none';
       document.getElementById('setup-menu').style.display = 'flex';
     }
@@ -444,6 +521,28 @@
       crates.push({ marker: marker, pos: cPos });
     }
 
+    function setupEnvironmentZones() {
+      // SAFE ZONE (Cerchio Blu)
+      let angle = Math.random() * Math.PI * 2;
+      let dist = 60 + Math.random() * 50;
+      let offsetLat = (dist / 111000) * Math.sin(angle);
+      let offsetLng = (dist / (111000 * Math.cos(playerPos[0] * Math.PI / 180))) * Math.cos(angle);
+      let szPos = [playerPos[0] + offsetLat, playerPos[1] + offsetLng];
+      
+      let safeCircle = L.circle(szPos, { color: '#00a8ff', fillColor: '#00a8ff', fillOpacity: 0.25, radius: 25 }).addTo(map);
+      safeZones.push({ circle: safeCircle, pos: szPos, radius: 25 });
+
+      // DANGER ZONE (Cerchio Rosso)
+      angle = Math.random() * Math.PI * 2;
+      dist = 100 + Math.random() * 80;
+      offsetLat = (dist / 111000) * Math.sin(angle);
+      offsetLng = (dist / (111000 * Math.cos(playerPos[0] * Math.PI / 180))) * Math.cos(angle);
+      let dzPos = [playerPos[0] + offsetLat, playerPos[1] + offsetLng];
+
+      let dangerCircle = L.circle(dzPos, { color: '#ff4757', fillColor: '#ff4757', fillOpacity: 0.3, radius: 35 }).addTo(map);
+      dangerZones.push({ circle: dangerCircle, pos: dzPos, radius: 35 });
+    }
+
     function setupExits() {
       let targetMeters = exitDistances[config.diff];
       let randomBaseAngle = Math.random() * Math.PI * 2;
@@ -475,16 +574,40 @@
       document.getElementById('tracker-container').innerHTML = trackerHTML;
     }
 
+    function deployDecoy() {
+      if (decoyCount <= 0 || activeDecoy || isGameOver || !gameStarted) return;
+      decoyCount--;
+      document.getElementById('decoy-count').innerText = decoyCount;
+      if (decoyCount === 0) document.getElementById('decoy-btn-ui').disabled = true;
+
+      playSoundEffect('decoy');
+      let dPos = [...playerPos];
+      const dIcon = L.divIcon({ className: 'decoy-icon', html: '', iconSize: [18, 18], iconAnchor: [9, 9] });
+      let marker = L.marker(dPos, { icon: dIcon }).addTo(map);
+
+      activeDecoy = { marker: marker, pos: dPos };
+
+      setTimeout(() => {
+        if (activeDecoy) {
+          map.removeLayer(activeDecoy.marker);
+          activeDecoy = null;
+        }
+      }, 10000);
+    }
+
     function launchGame() {
       if (!gpsAcquired) {
         alert("Wait for GPS lock before starting!");
         return;
       }
 
+      initAudio();
       gameStarted = true;
       startPos = [...playerPos];
       lives = config.lives;
       maxLives = config.lives;
+      decoyCount = 2;
+      document.getElementById('decoy-count').innerText = decoyCount;
       updateLivesUI();
 
       document.getElementById('setup-menu').style.display = 'none';
@@ -493,6 +616,7 @@
       map.setView(playerPos, 16);
 
       setupExits();
+      setupEnvironmentZones();
       for(let i = 0; i < config.count; i++) spawnZombie('walker');
       spawnCrate();
 
@@ -517,17 +641,50 @@
       }, 30000);
 
       crateInterval = setInterval(spawnCrate, 35000);
+
+      // RADAR AUDIO
+      radarInterval = setInterval(() => {
+        if (isGameOver) return;
+        let closestZombie = 9999;
+        zombies.forEach(z => {
+          let d = getDistanceMeters(playerPos[0], playerPos[1], z.pos[0], z.pos[1]);
+          if (d < closestZombie) closestZombie = d;
+        });
+
+        if (closestZombie < 30) {
+          playBeep(700, 0.05);
+        } else if (closestZombie < 60) {
+          playBeep(450, 0.05);
+        }
+      }, 1200);
     }
 
     function updateGameLoop() {
       if (isGameOver || !gameStarted) return;
 
+      let inSafeZone = false;
+      safeZones.forEach(sz => {
+        let d = getDistanceMeters(playerPos[0], playerPos[1], sz.pos[0], sz.pos[1]);
+        if (d <= sz.radius) inSafeZone = true;
+      });
+
+      dangerZones.forEach(dz => {
+        let d = getDistanceMeters(playerPos[0], playerPos[1], dz.pos[0], dz.pos[1]);
+        if (d <= dz.radius && Math.random() < 0.05) {
+          lives -= 1;
+          playSoundEffect('hit');
+          updateLivesUI();
+        }
+      });
+
+      let targetPos = activeDecoy ? activeDecoy.pos : playerPos;
+
       let closestZombieDist = 99999;
       let closestExitDist = 99999;
 
       zombies.forEach((z) => {
-        let dLat = playerPos[0] - z.pos[0];
-        let dLng = playerPos[1] - z.pos[1];
+        let dLat = targetPos[0] - z.pos[0];
+        let dLng = targetPos[1] - z.pos[1];
         let len = Math.hypot(dLat, dLng);
 
         if (len > 0) {
@@ -536,11 +693,12 @@
           z.marker.setLatLng(z.pos);
         }
 
-        let dist = getDistanceMeters(playerPos[0], playerPos[1], z.pos[0], z.pos[1]);
-        if (dist < closestZombieDist) closestZombieDist = dist;
+        let distToPlayer = getDistanceMeters(playerPos[0], playerPos[1], z.pos[0], z.pos[1]);
+        if (distToPlayer < closestZombieDist) closestZombieDist = distToPlayer;
 
-        if (dist < 10) {
+        if (distToPlayer < 10 && !inSafeZone) {
           lives -= z.damage;
+          playSoundEffect('hit');
           updateLivesUI();
           let angle = Math.random() * Math.PI * 2;
           let offsetLat = (100 / 111000) * Math.sin(angle);
@@ -568,6 +726,7 @@
         if (dist < 20) {
           isGameOver = true;
           clearInterval(gameLoopInterval);
+          playSoundEffect('win');
           saveRunHistory(true);
           alert(`YOU ESCAPED!\nSuccessful Run!\nFinal Score: ${score}`);
           location.reload();
@@ -581,6 +740,7 @@
           crates.splice(index, 1);
           if (lives < maxLives) lives++;
           score += 200;
+          playSoundEffect('pickup');
           updateLivesUI();
         }
       });
