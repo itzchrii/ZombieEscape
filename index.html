@@ -229,9 +229,9 @@
 
     <div class="section-label">1. Difficulty & Exit Distance</div>
     <div class="opt-grid">
-      <div class="opt-btn active" onclick="selectOpt(this, 'diff', 'EASY')">SHORT<br><small>(500m)</small></div>
-      <div class="opt-btn" onclick="selectOpt(this, 'diff', 'MEDIUM')">TOWN<br><small>(1.8 km)</small></div>
-      <div class="opt-btn" onclick="selectOpt(this, 'diff', 'HARDCORE')">BORDER<br><small>(3.5 km)</small></div>
+      <div class="opt-btn active" onclick="selectOpt(this, 'diff', 'EASY')">SHORT<br><small>(250m)</small></div>
+      <div class="opt-btn" onclick="selectOpt(this, 'diff', 'MEDIUM')">TOWN<br><small>(500m)</small></div>
+      <div class="opt-btn" onclick="selectOpt(this, 'diff', 'HARDCORE')">BORDER<br><small>(800m)</small></div>
     </div>
 
     <div class="section-label">2. Exits Count</div>
@@ -320,8 +320,8 @@
 
     let config = { diff: 'EASY', exits: 1, lives: 3, count: 6 };
     
-    // Distanze scalate per un paese di ~25km2 (~5km di diametro max)
-    const exitDistances = { EASY: 500, MEDIUM: 1800, HARDCORE: 3500 };
+    // Distanze ricalibrate sul centro abitato reale del tuo paese
+    const exitDistances = { EASY: 250, MEDIUM: 500, HARDCORE: 800 };
 
     function getZombieSpeed(type) {
       let baseSpeed = 0.000005; // Walker: 10 km/h
@@ -413,7 +413,7 @@
     function spawnZombie(type) {
       if(!playerPos) return;
       let angle = Math.random() * Math.PI * 2;
-      let distanceMeters = 120 + Math.random() * 130;
+      let distanceMeters = 80 + Math.random() * 80;
 
       let offsetLat = (distanceMeters / 111000) * Math.sin(angle);
       let offsetLng = (distanceMeters / (111000 * Math.cos(playerPos[0] * Math.PI / 180))) * Math.cos(angle);
@@ -434,7 +434,7 @@
     function spawnCrate() {
       if(!playerPos) return;
       let angle = Math.random() * Math.PI * 2;
-      let dist = 60 + Math.random() * 100;
+      let dist = 40 + Math.random() * 60;
       let offsetLat = (dist / 111000) * Math.sin(angle);
       let offsetLng = (dist / (111000 * Math.cos(playerPos[0] * Math.PI / 180))) * Math.cos(angle);
 
@@ -449,7 +449,6 @@
       let latOffset = targetMeters / 111000;
       let lngOffset = targetMeters / (111000 * Math.cos(playerPos[0] * Math.PI / 180));
 
-      // Angolo iniziale casuale a 360° per evitare che l'uscita compaia sempre nello stesso punto
       let randomBaseAngle = Math.random() * 360;
       let angles = [randomBaseAngle, (randomBaseAngle + 180) % 360];
       let trackerHTML = '';
@@ -490,7 +489,7 @@
       document.getElementById('setup-menu').style.display = 'none';
 
       map.invalidateSize();
-      map.setView(playerPos, 15);
+      map.setView(playerPos, 16);
 
       setupExits();
       for(let i = 0; i < config.count; i++) spawnZombie('walker');
@@ -543,8 +542,8 @@
           lives -= z.damage;
           updateLivesUI();
           let angle = Math.random() * Math.PI * 2;
-          let offsetLat = (150 / 111000) * Math.sin(angle);
-          let offsetLng = (150 / (111000 * Math.cos(playerPos[0] * Math.PI / 180))) * Math.cos(angle);
+          let offsetLat = (100 / 111000) * Math.sin(angle);
+          let offsetLng = (100 / (111000 * Math.cos(playerPos[0] * Math.PI / 180))) * Math.cos(angle);
           z.pos = [playerPos[0] + offsetLat, playerPos[1] + offsetLng];
         }
       });
@@ -647,7 +646,7 @@
         container.appendChild(card);
 
         setTimeout(() => {
-          let hMap = L.map(`hist-map-${index}`, { zoomControl: false, attributionControl: false, dragging: false, touchZoom: false, scrollWheelZoom: false }).setView(run.startPos, 13);
+          let hMap = L.map(`hist-map-${index}`, { zoomControl: false, attributionControl: false, dragging: false, touchZoom: false, scrollWheelZoom: false }).setView(run.startPos, 14);
           L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(hMap);
 
           const startIcon = L.divIcon({ className: 'start-icon', html: '', iconSize: [14, 14], iconAnchor: [7, 7] });
@@ -679,11 +678,6 @@
         document.getElementById('speed-val').innerText = "0";
       }, 1000);
     }
-
-    window.onload = initApp;
-  </script>
-</body>
-</html>
 
     window.onload = initApp;
   </script>
