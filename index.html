@@ -9,8 +9,8 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; user-select: none; }
     body, html { width: 100%; height: 100%; overflow: hidden; background: #000; color: #fff; }
     
-    /* MENU INIZIALE */
-    #setup-menu {
+    /* SCHERMATE MENU (START E SETUP) */
+    .menu-screen {
       position: fixed;
       top: 0; left: 0;
       width: 100vw; height: 100vh;
@@ -22,10 +22,24 @@
       overflow-y: auto;
     }
 
-    .title { color: #00FF66; font-size: 28px; font-weight: 900; text-align: center; margin-bottom: 4px; }
+    .title { color: #00FF66; font-size: 32px; font-weight: 900; text-align: center; margin-bottom: 4px; text-shadow: 0 0 15px rgba(0, 255, 102, 0.4); }
     .subtitle { color: #888; font-size: 13px; text-align: center; margin-bottom: 20px; }
     
     .section-label { font-size: 11px; color: #aaa; font-weight: bold; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+
+    /* LEGENDA SCHERMATA START */
+    .legend-box {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .legend-item { display: flex; align-items: center; gap: 12px; font-size: 13px; color: #ccc; }
+    .legend-item strong { color: #fff; }
 
     .opt-grid { display: flex; gap: 8px; margin-bottom: 16px; }
     .opt-btn {
@@ -42,11 +56,11 @@
     }
     .opt-btn.active { border-color: #00FF66; background: rgba(0, 255, 102, 0.15); color: #00FF66; }
 
-    .start-btn {
+    .main-btn {
       background: #00FF66;
       color: #000;
       font-weight: 900;
-      font-size: 18px;
+      font-size: 20px;
       padding: 16px;
       border: none;
       border-radius: 12px;
@@ -62,8 +76,23 @@
     
     .hud { position: absolute; top:0; left:0; z-index: 100; pointer-events: none; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between; padding: 12px; }
     .hud-top { display: flex; justify-content: space-between; align-items: flex-start; width: 100%; }
-    .stats-box { background: rgba(0, 0, 0, 0.9); padding: 8px 12px; border-radius: 10px; border: 1px solid #00FF66; }
-    .lives { color: #ff4757; font-size: 20px; letter-spacing: 2px; font-weight: bold; }
+    
+    /* INDICATORE FRECCIA USCITA IN ALTO A SINISTRA */
+    .exit-tracker-box {
+      background: rgba(0, 0, 0, 0.9);
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid #00FF66;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      max-width: 140px;
+    }
+    .tracker-item { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: bold; color: #00FF66; }
+    .arrow-icon { font-size: 18px; display: inline-block; transition: transform 0.2s ease; transform-origin: center; }
+
+    .stats-box { background: rgba(0, 0, 0, 0.9); padding: 8px 12px; border-radius: 10px; border: 1px solid #00FF66; text-align: right; }
+    .lives { color: #ff4757; font-size: 18px; letter-spacing: 2px; font-weight: bold; }
     .hud-center { text-align: center; background: rgba(0,0,0,0.9); padding: 6px 12px; border-radius: 10px; border: 1px solid #333; }
 
     /* LAYOUT HUD IN BASSO */
@@ -86,29 +115,58 @@
     .dev-controls { position: absolute; bottom: 85px; left: 50%; transform: translateX(-50%); z-index: 110; display: grid; grid-template-columns: repeat(3, 42px); gap: 4px; background: rgba(0,0,0,0.9); padding: 6px; border-radius: 10px; pointer-events: auto; }
     .dev-btn { background: #222; color: #00FF66; border: 1px solid #00FF66; width: 42px; height: 42px; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; }
 
-    /* STILI MARKER */
+    /* STILI MARKER ED ICONE LEGENDA */
     .leaflet-marker-icon { overflow: visible !important; }
     .player-icon { width: 20px; height: 20px; background: #00FF66; border: 3px solid #fff; border-radius: 50%; box-shadow: 0 0 14px #00FF66; }
-    .z-walker { width: 16px; height: 16px; background: #ff4757; border: 2px solid #000; border-radius: 50%; box-shadow: 0 0 8px #ff4757; }
-    .z-runner { width: 14px; height: 14px; background: #ffa502; border: 2px solid #000; border-radius: 50%; box-shadow: 0 0 8px #ffa502; }
-    .z-tank { width: 22px; height: 22px; background: #a55eea; border: 2px solid #000; border-radius: 50%; box-shadow: 0 0 10px #a55eea; }
+    
+    .z-walker-demo, .z-walker { width: 16px; height: 16px; background: #ff4757; border: 2px solid #000; border-radius: 50%; box-shadow: 0 0 8px #ff4757; display: inline-block; flex-shrink: 0; }
+    .z-runner-demo, .z-runner { width: 14px; height: 14px; background: #ffa502; border: 2px solid #000; border-radius: 50%; box-shadow: 0 0 8px #ffa502; display: inline-block; flex-shrink: 0; }
+    .z-tank-demo, .z-tank { width: 22px; height: 22px; background: #a55eea; border: 2px solid #000; border-radius: 50%; box-shadow: 0 0 10px #a55eea; display: inline-block; flex-shrink: 0; }
     .crate-icon { width: 16px; height: 16px; background: #ffd32a; border: 2px solid #000; border-radius: 3px; box-shadow: 0 0 10px #ffd32a; }
     
-    .exit-icon {
-      width: 32px; height: 32px; background: #00FF66; border: 3px solid #fff; border-radius: 50%;
-      box-shadow: 0 0 20px #00FF66; color: #000; font-weight: 900; font-size: 18px;
-      display: flex; align-items: center; justify-content: center;
+    .exit-icon-demo, .exit-icon {
+      width: 28px; height: 28px; background: #00FF66; border: 2px solid #fff; border-radius: 50%;
+      box-shadow: 0 0 15px #00FF66; color: #000; font-weight: 900; font-size: 15px;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
     }
   </style>
 </head>
 <body>
 
-  <!-- MENU INIZIALE -->
-  <div id="setup-menu">
+  <!-- SCHERMATA 1: MENU PRINCIPALE / START -->
+  <div id="start-menu" class="menu-screen">
     <div class="title">ZOMBIE ESCAPE</div>
-    <div class="subtitle">Imposta la tua partita survival</div>
+    <div class="subtitle">Survival GPS in Tempo Reale</div>
 
-    <div class="section-label">1. Difficoltà e Distanza Uscita</div>
+    <div class="section-label">Legenda Elementi</div>
+    <div class="legend-box">
+      <div class="legend-item">
+        <div class="exit-icon-demo">E</div>
+        <div><strong>USCITA:</strong> Raggiungila per vincere ed fuggire!</div>
+      </div>
+      <div class="legend-item">
+        <div class="z-walker-demo"></div>
+        <div><strong>WALKER:</strong> Zombie standard, velocit&agrave; media.</div>
+      </div>
+      <div class="legend-item">
+        <div class="z-runner-demo"></div>
+        <div><strong>RUNNER:</strong> Molto veloce, si avvicina rapidamente!</div>
+      </div>
+      <div class="legend-item">
+        <div class="z-tank-demo"></div>
+        <div><strong>TANK:</strong> Lento ma resistente (infligge 2 danni).</div>
+      </div>
+    </div>
+
+    <button class="main-btn" onclick="goToSetup()">PLAY</button>
+  </div>
+
+  <!-- SCHERMATA 2: MENU CONFIGURAZIONE -->
+  <div id="setup-menu" class="menu-screen" style="display: none;">
+    <div class="title">CONFIGURAZIONE</div>
+    <div class="subtitle">Imposta la tua partita</div>
+
+    <div class="section-label">1. Difficolt&agrave; e Distanza Uscita</div>
     <div class="opt-grid">
       <div class="opt-btn active" onclick="selectOpt(this, 'diff', 'easy')">FACILE<br><small>(500m)</small></div>
       <div class="opt-btn" onclick="selectOpt(this, 'diff', 'medium')">MEDIA<br><small>(1.2 km)</small></div>
@@ -135,20 +193,25 @@
       <div class="opt-btn" onclick="selectOpt(this, 'count', 10)">ORDA (10)</div>
     </div>
 
-    <button class="start-btn" onclick="launchGame()">AVVIA ESCAPE</button>
+    <button class="main-btn" onclick="launchGame()">AVVIA ESCAPE</button>
   </div>
 
   <!-- INTERFACCIA HUD -->
   <div class="hud">
     <div class="hud-top">
-      <div class="stats-box">
-        <div id="lives-display" class="lives">♥♥♥</div>
-        <div id="wave-txt" style="font-size:10px; color:#aaa;">ONDATA 1</div>
+      <!-- FRECCIA INDICATORE USCITA IN ALTO A SINISTRA -->
+      <div class="exit-tracker-box" id="tracker-container">
+        <!-- Generato dinamicamente in base alle uscite -->
       </div>
       
       <div class="hud-center">
         <div id="timer" style="color:#00FF66; font-weight:bold; font-size:16px;">00:00</div>
         <div id="score" style="font-size:10px; color:#aaa;">PUNTI: 0</div>
+      </div>
+
+      <div class="stats-box">
+        <div id="lives-display" class="lives">♥♥♥</div>
+        <div id="wave-txt" style="font-size:10px; color:#aaa;">ONDATA 1</div>
       </div>
     </div>
 
@@ -159,7 +222,7 @@
       <button class="dev-btn" onclick="moveSim(0, 0.0003)">►</button>
     </div>
 
-    <!-- METRICHE HUD CON TACHIMETRO ROSSO AL CENTRO -->
+    <!-- METRICHE HUD IN BASSO CON TACHIMETRO ROSSO -->
     <div class="hud-bottom">
       <div class="metric-card">
         <div id="threat-dist" class="metric-value" style="color:#ff4757;">--</div>
@@ -173,7 +236,7 @@
 
       <div class="metric-card">
         <div id="exit-dist" class="metric-value" style="color:#00FF66;">--</div>
-        <div class="metric-label">Uscita</div>
+        <div class="metric-label">Uscita Vicina</div>
       </div>
     </div>
   </div>
@@ -192,10 +255,13 @@
 
     let config = { diff: 'easy', exits: 1, lives: 3, count: 6 };
     
-    // Distanze uscite in metri
     const exitDistances = { easy: 500, medium: 1200, hard: 2500 };
-    // Moltiplicatori velocità zombie
     const diffSpeeds = { easy: 1.5, medium: 2.2, hard: 3.5 };
+
+    function goToSetup() {
+      document.getElementById('start-menu').style.display = 'none';
+      document.getElementById('setup-menu').style.display = 'flex';
+    }
 
     function selectOpt(btn, category, value) {
       config[category] = value;
@@ -212,7 +278,6 @@
     }
 
     function spawnZombie(type) {
-      // Offset casuale sicuro per evitare coordinate invalide
       let offsetLat = (Math.random() - 0.5) * 0.003;
       let offsetLng = (Math.random() - 0.5) * 0.003;
       let zPos = [playerPos[0] + offsetLat, playerPos[1] + offsetLng];
@@ -236,20 +301,30 @@
 
     function setupExits() {
       let targetMeters = exitDistances[config.diff];
-      // Converti metri approssimativamente in gradi lat/lng
       let degOffset = targetMeters / 111320; 
 
-      let angles = [0, 180]; // Angoli opposti se ci sono 2 uscite
+      let angles = [0, 180];
+      let trackerHTML = '';
+
       for (let i = 0; i < config.exits; i++) {
         let angle = (angles[i] + Math.random() * 40 - 20) * (Math.PI / 180);
         let eLat = playerPos[0] + (degOffset * Math.cos(angle));
         let eLng = playerPos[1] + (degOffset * Math.sin(angle));
         let ePos = [eLat, eLng];
 
-        const exitIcon = L.divIcon({ className: 'exit-icon', html: 'E', iconSize: [32, 32], iconAnchor: [16, 16] });
+        const exitIcon = L.divIcon({ className: 'exit-icon', html: 'E', iconSize: [28, 28], iconAnchor: [14, 14] });
         let marker = L.marker(ePos, { icon: exitIcon }).addTo(map);
-        exits.push({ marker: marker, pos: ePos });
+        exits.push({ marker: marker, pos: ePos, id: i });
+
+        trackerHTML += `
+          <div class="tracker-item">
+            <span id="arrow-exit-${i}" class="arrow-icon">⬆</span>
+            <span id="dist-exit-${i}">--</span>
+          </div>
+        `;
       }
+
+      document.getElementById('tracker-container').innerHTML = trackerHTML;
     }
 
     function updateGameLoop() {
@@ -258,7 +333,7 @@
       let closestZombieDist = 9999;
       let closestExitDist = 9999;
 
-      // Inseguimento Zombie
+      // Movimento Zombie
       zombies.forEach((z) => {
         let dLat = playerPos[0] - z.pos[0];
         let dLng = playerPos[1] - z.pos[1];
@@ -277,11 +352,25 @@
         }
       });
 
-      // Calcolo Distanza Uscite & Vittoria
+      // Calcolo Frecce Direzionali per Uscite
       exits.forEach((e) => {
-        let dist = Math.hypot(playerPos[0] - e.pos[0], playerPos[1] - e.pos[1]) * 111320;
+        let dLat = e.pos[0] - playerPos[0];
+        let dLng = e.pos[1] - playerPos[1];
+        let dist = Math.hypot(dLat, dLng) * 111320;
         if (dist < closestExitDist) closestExitDist = dist;
 
+        // Angolo in gradi tra Giocatore ed Uscita
+        let angleDeg = Math.atan2(dLng, dLat) * (180 / Math.PI);
+        
+        let arrowElem = document.getElementById(`arrow-exit-${e.id}`);
+        let distElem = document.getElementById(`dist-exit-${e.id}`);
+
+        if (arrowElem && distElem) {
+          arrowElem.style.transform = `rotate(${angleDeg}deg)`;
+          distElem.innerText = dist >= 1000 ? (dist / 1000).toFixed(1) + 'km' : Math.round(dist) + 'm';
+        }
+
+        // Condizione Vittoria
         if (dist < 15) {
           isGameOver = true;
           clearInterval(gameLoopInterval);
@@ -290,7 +379,7 @@
         }
       });
 
-      // Casse di cura
+      // Casse
       crates.forEach((c, index) => {
         let dist = Math.hypot(playerPos[0] - c.pos[0], playerPos[1] - c.pos[1]) * 111320;
         if (dist < 12) {
@@ -352,6 +441,7 @@
         );
       }
 
+      // Generazione uscite immediata
       setupExits();
       for(let i = 0; i < config.count; i++) spawnZombie('walker');
       spawnCrate();
@@ -386,7 +476,6 @@
       playerMarker.setLatLng(playerPos);
       map.panTo(playerPos);
 
-      // Simulatore velocità (~20 km/h nei test)
       document.getElementById('speed-val').innerText = "20";
       clearTimeout(speedTimeout);
       speedTimeout = setTimeout(() => {
