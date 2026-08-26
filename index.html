@@ -154,15 +154,15 @@
       </div>
       <div class="legend-item">
         <div class="z-walker-demo"></div>
-        <div><strong>WALKER:</strong> Zombie lento a passo d'uomo.</div>
+        <div><strong>WALKER (10 km/h):</strong> Zombie standard.</div>
       </div>
       <div class="legend-item">
         <div class="z-runner-demo"></div>
-        <div><strong>RUNNER:</strong> Pi&ugrave; veloce, corsa leggera.</div>
+        <div><strong>RUNNER (15 km/h):</strong> Zombie veloce in corsa.</div>
       </div>
       <div class="legend-item">
         <div class="z-tank-demo"></div>
-        <div><strong>TANK:</strong> Molto lento ma resistente (2 danni).</div>
+        <div><strong>TANK (5 km/h):</strong> Lento ma resistente (2 danni).</div>
       </div>
     </div>
 
@@ -260,13 +260,18 @@
     let gameStarted = false;
     let speedTimeout;
 
+    let lastGPSPos = null;
+    let lastGPSTime = null;
+
     let config = { diff: 'easy', exits: 1, lives: 3, count: 6 };
     const exitDistances = { easy: 500, medium: 1200, hard: 2500 };
 
+    // Velocità esatte convertite per il tick di aggiornamento (200ms)
+    // 10 km/h = 2.77 m/s -> ~0.000025 gradi di lat/lng al secondo
     function getZombieSpeed(type) {
-      let baseSpeed = 0.000004;
-      if (type === 'runner') return baseSpeed * 1.3;
-      if (type === 'tank') return baseSpeed * 0.5;
+      let baseSpeed = 0.000005; // 10 km/h (0.55m per tick da 200ms)
+      if (type === 'runner') return baseSpeed * 1.5; // 15 km/h
+      if (type === 'tank') return baseSpeed * 0.5;   // 5 km/h
       return baseSpeed;
     }
 
@@ -281,9 +286,7 @@
       return R * c;
     }
 
-    // INIZIALIZZA LA MAPPA E ATTIVA SUBITO IL GPS AL CARICAMENTO DELLA PAGINA
     function initApp() {
-      // Posizione iniziale neutra
       playerPos = [41.9028, 12.4964];
       map = L.map('map', { zoomControl: false, attributionControl: false }).setView(playerPos, 16);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
@@ -291,37 +294,50 @@
       const playerIcon = L.divIcon({ className: 'player-icon', html: '', iconSize: [20, 20], iconAnchor: [10, 10] });
       playerMarker = L.marker(playerPos, { icon: playerIcon }).addTo(map);
 
-      // ATTIVAZIONE IMMEDIATA DEL GPS SUL MENU
+      // RILEVAZIONE GPS AD ALTA PRECISIONE SUL MENU
       if (navigator.geolocation) {
         navigator.geolocation.watchPosition(
           (pos) => {
-            playerPos = [pos.coords.latitude, pos.coords.longitude];
+            let now = Date.now();
+            let newPos = [pos.coords.latitude, pos.coords.longitude];
+
+            // Calcolo preciso velocità in KM/H tramite differenza di posizione se pos.coords.speed non è disponibile
+            let calculatedSpeed = 0;
+            if (pos.coords.speed !== null && pos.coords.speed !== undefined && !isNaN(pos.coords.speed) && pos.coords.speed >= 0) {
+              calculatedSpeed = Math.round(pos.coords.speed * 3.6);
+            } else if (lastGPSPos && lastGPSTime) {
+              let distMeters = getDistanceMeters(lastGPSPos[0], lastGPSPos[1], newPos[0], newPos[1]);
+              let timeSec = (now - lastGPSTime) / 1000;
+              if (timeSec > 0 && distMeters > 0.5) {
+                calculatedSpeed = Math.round((distMeters / timeSec) * 3.6);
+              }
+            }
+
+            lastGPSPos = newPos;
+            lastGPSTime = now;
+            playerPos = newPos;
+
             playerMarker.setLatLng(playerPos);
             map.panTo(playerPos);
             gpsAcquired = true;
 
-            // Aggiorna grafica status GPS
             let status1 = document.getElementById('gps-status-1');
             let status2 = document.getElementById('gps-status-2');
             status1.classList.add('ok');
             status2.classList.add('ok');
-            status1.innerText = "GPS AGGANCIATO CORRETTAMENTE ✓";
-            status2.innerText = "GPS AGGANCIATO CORRETTAMENTE ✓";
+            status1.innerText = "GPS AGGANCIATO AD ALTA PRECISIONE ✓";
+            status2.innerText = "GPS AGGANCIATO AD ALTA PRECISIONE ✓";
 
-            if(gameStarted) {
-              let currentSpeed = 0;
-              if (pos.coords.speed !== null && pos.coords.speed !== undefined && !isNaN(pos.coords.speed)) {
-                currentSpeed = Math.round(pos.coords.speed * 3.6);
-              }
-              document.getElementById('speed-val').innerText = currentSpeed;
+            if (gameStarted) {
+              document.getElementById('speed-val').innerText = calculatedSpeed;
               document.getElementById('dev-panel').style.display = 'none';
             }
           },
           (err) => {
-            document.getElementById('gps-status-1').innerText = "Attiva il GPS nel browser!";
-            document.getElementById('gps-status-2').innerText = "Attiva il GPS nel browser!";
+            document.getElementById('gps-status-1').innerText = "Attiva la geolocalizzazione GPS!";
+            document.getElementById('gps-status-2').innerText = "Attiva la geolocalizzazione GPS!";
           },
-          { enableHighAccuracy: true }
+          { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
         );
       }
     }
@@ -401,7 +417,7 @@
 
     function launchGame() {
       if (!gpsAcquired) {
-        alert("Attendi un secondo che il GPS si agganci alla tua posizione reale!");
+        alert("Attendi l'aggancio del GPS prima di iniziare!");
         return;
       }
 
@@ -415,7 +431,6 @@
       map.invalidateSize();
       map.setView(playerPos, 16);
 
-      // ORA LE USCITE VENGONO SPARTITE DALLA TUA POSIZIONE IN PUGLIA
       setupExits();
       for(let i = 0; i < config.count; i++) spawnZombie('walker');
       spawnCrate();
