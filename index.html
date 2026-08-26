@@ -127,7 +127,7 @@
 </head>
 <body>
 
-  <!-- 1. MENU START CON LEGENDA -->
+  <!-- MENU START -->
   <div id="start-menu" class="menu-screen">
     <div class="title">ZOMBIE ESCAPE</div>
     <div class="subtitle">Survival GPS in Tempo Reale</div>
@@ -155,7 +155,7 @@
     <button class="main-btn" onclick="goToSetup()">PLAY</button>
   </div>
 
-  <!-- 2. MENU SELEZIONE (SOLO 1 O 3 VITE) -->
+  <!-- MENU CONFIGURAZIONE -->
   <div id="setup-menu" class="menu-screen" style="display: none;">
     <div class="title">CONFIGURAZIONE</div>
     <div class="subtitle">Imposta la tua partita</div>
@@ -189,7 +189,7 @@
     <button class="main-btn" onclick="launchGame()">AVVIA ESCAPE</button>
   </div>
 
-  <!-- HUD MAPPA -->
+  <!-- HUD GAMEPLAY -->
   <div class="hud">
     <div class="hud-top">
       <div class="exit-tracker-box" id="tracker-container"></div>
@@ -240,17 +240,15 @@
     let lives = 3, maxLives = 3, score = 0, timeSurvived = 0, wave = 1;
     let gameLoopInterval, waveInterval, crateInterval, timerInterval;
     let isGameOver = false;
-    let gameStarted = false;
+    let entitiesSpawned = false;
     let speedTimeout;
 
     let config = { diff: 'easy', exits: 1, lives: 3, count: 6 };
-    
     const exitDistances = { easy: 500, medium: 1200, hard: 2500 };
 
-    // Velocità zombie (passo d'uomo molto lento)
     function getZombieSpeed(type) {
-      let baseSpeed = 0.00002; // Circa 2-3 km/h
-      if (type === 'runner') return baseSpeed * 1.5;
+      let baseSpeed = 0.000015; // Passo d'uomo molto lento
+      if (type === 'runner') return baseSpeed * 1.4;
       if (type === 'tank') return baseSpeed * 0.6;
       return baseSpeed;
     }
@@ -278,8 +276,7 @@
     }
 
     function initMap() {
-      // Posizione iniziale di default (Milano) finché non prende il GPS reale
-      playerPos = [45.4642, 9.1900];
+      playerPos = [45.4642, 9.1900]; // Posizione neutra iniziale
       map = L.map('map', { zoomControl: false, attributionControl: false }).setView(playerPos, 16);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
@@ -289,8 +286,8 @@
 
     function spawnZombie(type) {
       if(!playerPos) return;
-      let offsetLat = (Math.random() - 0.5) * 0.0025;
-      let offsetLng = (Math.random() - 0.5) * 0.0025;
+      let offsetLat = (Math.random() - 0.5) * 0.002;
+      let offsetLng = (Math.random() - 0.5) * 0.002;
       let zPos = [playerPos[0] + offsetLat, playerPos[1] + offsetLng];
 
       let cssClass = 'z-walker', dmg = 1, size = 16;
@@ -305,7 +302,7 @@
 
     function spawnCrate() {
       if(!playerPos) return;
-      let cPos = [playerPos[0] + (Math.random() - 0.5) * 0.002, playerPos[1] + (Math.random() - 0.5) * 0.002];
+      let cPos = [playerPos[0] + (Math.random() - 0.5) * 0.0015, playerPos[1] + (Math.random() - 0.5) * 0.0015];
       const cIcon = L.divIcon({ className: 'crate-icon', html: '', iconSize: [16, 16], iconAnchor: [8, 8] });
       let marker = L.marker(cPos, { icon: cIcon }).addTo(map);
       crates.push({ marker: marker, pos: cPos });
@@ -340,13 +337,43 @@
       document.getElementById('tracker-container').innerHTML = trackerHTML;
     }
 
+    function startEntities() {
+      if (entitiesSpawned) return;
+      entitiesSpawned = true;
+
+      setupExits();
+      for(let i = 0; i < config.count; i++) spawnZombie('walker');
+      spawnCrate();
+
+      gameLoopInterval = setInterval(updateGameLoop, 200);
+
+      timerInterval = setInterval(() => {
+        if(isGameOver) return;
+        timeSurvived++;
+        let min = String(Math.floor(timeSurvived / 60)).padStart(2, '0');
+        let sec = String(timeSurvived % 60).padStart(2, '0');
+        document.getElementById('timer').innerText = `${min}:${sec}`;
+        score += wave * 5;
+        document.getElementById('score').innerText = `PUNTI: ${score}`;
+      }, 1000);
+
+      waveInterval = setInterval(() => {
+        wave++;
+        document.getElementById('wave-txt').innerText = `ONDATA ${wave}`;
+        spawnZombie('walker');
+        if(wave % 2 === 0) spawnZombie('runner');
+        if(wave % 3 === 0) spawnZombie('tank');
+      }, 25000);
+
+      crateInterval = setInterval(spawnCrate, 35000);
+    }
+
     function updateGameLoop() {
-      if (isGameOver || !gameStarted) return;
+      if (isGameOver || !entitiesSpawned) return;
 
       let closestZombieDist = 99999;
       let closestExitDist = 99999;
 
-      // Inseguimento Zombie controllato a passo d'uomo
       zombies.forEach((z) => {
         let dLat = playerPos[0] - z.pos[0];
         let dLng = playerPos[1] - z.pos[1];
@@ -368,7 +395,6 @@
         }
       });
 
-      // Calcolo Frecce Uscite
       exits.forEach((e) => {
         let dLat = e.pos[0] - playerPos[0];
         let dLng = e.pos[1] - playerPos[1];
@@ -393,7 +419,6 @@
         }
       });
 
-      // Casse
       crates.forEach((c, index) => {
         let dist = getDistanceMeters(playerPos[0], playerPos[1], c.pos[0], c.pos[1]);
         if (dist < 12) {
@@ -434,77 +459,43 @@
       document.getElementById('setup-menu').style.display = 'none';
       setTimeout(() => { map.invalidateSize(); }, 100);
 
-      // Aggiornamento posizione GPS reale
       if (navigator.geolocation) {
-        navigator.geolocation.watchPosition(
+        navigator.geolocation.getCurrentPosition(
           (pos) => {
-            if(isGameOver) return;
-            let firstFix = !gameStarted;
             playerPos = [pos.coords.latitude, pos.coords.longitude];
             playerMarker.setLatLng(playerPos);
-            map.panTo(playerPos);
-            
-            let currentSpeed = 0;
-            if (pos.coords.speed !== null && pos.coords.speed !== undefined && !isNaN(pos.coords.speed)) {
-              currentSpeed = Math.round(pos.coords.speed * 3.6);
-            }
-            document.getElementById('speed-val').innerText = currentSpeed;
-            document.getElementById('dev-panel').style.display = 'none';
+            map.setView(playerPos, 16);
+            startEntities();
 
-            if (firstFix) {
-              gameStarted = true;
-              startEntities();
-            }
+            navigator.geolocation.watchPosition((p) => {
+              if(isGameOver) return;
+              playerPos = [p.coords.latitude, p.coords.longitude];
+              playerMarker.setLatLng(playerPos);
+              map.panTo(playerPos);
+
+              let currentSpeed = 0;
+              if (p.coords.speed !== null && p.coords.speed !== undefined && !isNaN(p.coords.speed)) {
+                currentSpeed = Math.round(p.coords.speed * 3.6);
+              }
+              document.getElementById('speed-val').innerText = currentSpeed;
+              document.getElementById('dev-panel').style.display = 'none';
+            }, null, { enableHighAccuracy: true });
           },
           (err) => {
-            console.log("GPS non disponibile. Uso tasti simulatore.");
-            if(!gameStarted) {
-              gameStarted = true;
-              startEntities();
-            }
+            console.log("GPS non attivo o permesso negato. Usa i tasti a schermo.");
+            startEntities();
           },
           { enableHighAccuracy: true }
         );
       } else {
-        gameStarted = true;
         startEntities();
       }
-    }
-
-    function startEntities() {
-      setupExits();
-      for(let i = 0; i < config.count; i++) spawnZombie('walker');
-      spawnCrate();
-
-      gameLoopInterval = setInterval(updateGameLoop, 200);
-
-      timerInterval = setInterval(() => {
-        if(isGameOver) return;
-        timeSurvived++;
-        let min = String(Math.floor(timeSurvived / 60)).padStart(2, '0');
-        let sec = String(timeSurvived % 60).padStart(2, '0');
-        document.getElementById('timer').innerText = `${min}:${sec}`;
-        score += wave * 5;
-        document.getElementById('score').innerText = `PUNTI: ${score}`;
-      }, 1000);
-
-      waveInterval = setInterval(() => {
-        wave++;
-        document.getElementById('wave-txt').innerText = `ONDATA ${wave}`;
-        spawnZombie('walker');
-        if(wave % 2 === 0) spawnZombie('runner');
-        if(wave % 3 === 0) spawnZombie('tank');
-      }, 25000);
-
-      crateInterval = setInterval(spawnCrate, 35000);
     }
 
     function moveSim(lat, lng) {
       if(isGameOver) return;
-      if (!gameStarted) {
-        gameStarted = true;
-        startEntities();
-      }
+      if (!entitiesSpawned) startEntities();
+
       playerPos[0] += lat;
       playerPos[1] += lng;
       playerMarker.setLatLng(playerPos);
