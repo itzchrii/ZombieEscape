@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Zombie Escape GPS</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
@@ -633,6 +636,7 @@
       }, 1000);
 
       waveInterval = setInterval(() => {
+        if(isGameOver) return;
         wave++;
         document.getElementById('wave-txt').innerText = `WAVE ${wave}`;
         spawnZombie('walker');
@@ -640,7 +644,10 @@
         if(wave % 3 === 0) spawnZombie('tank');
       }, 30000);
 
-      crateInterval = setInterval(spawnCrate, 35000);
+      crateInterval = setInterval(() => {
+        if(isGameOver) return;
+        spawnCrate();
+      }, 35000);
 
       // RADAR AUDIO
       radarInterval = setInterval(() => {
@@ -726,6 +733,10 @@
         if (dist < 20) {
           isGameOver = true;
           clearInterval(gameLoopInterval);
+          clearInterval(timerInterval);
+          clearInterval(waveInterval);
+          clearInterval(crateInterval);
+          clearInterval(radarInterval);
           playSoundEffect('win');
           saveRunHistory(true);
           alert(`YOU ESCAPED!\nSuccessful Run!\nFinal Score: ${score}`);
@@ -758,9 +769,13 @@
       let hearts = '';
       for (let i = 0; i < lives; i++) hearts += '♥';
       document.getElementById('lives-display').innerText = hearts || 'DEAD';
-      if (lives <= 0) {
+      if (lives <= 0 && !isGameOver) {
         isGameOver = true;
         clearInterval(gameLoopInterval);
+        clearInterval(timerInterval);
+        clearInterval(waveInterval);
+        clearInterval(crateInterval);
+        clearInterval(radarInterval);
         saveRunHistory(false);
         alert(`GAME OVER!\nFinal Score: ${score}`);
         location.reload();
@@ -841,10 +856,6 @@
     }
 
     window.onload = initApp;
-  </script>
-</body>
-</html>
-    window.onload = initMap;
   </script>
 </body>
 </html>
