@@ -1,0 +1,53 @@
+name: Build iOS IPA
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install Cordova
+        run: |
+          npm install -g cordova
+
+      - name: Create Cordova Project
+        run: |
+          cordova create app com.itzchrii.zombieescape ZombieEscape
+          cd app
+          cordova platform add ios
+          rm -rf www/*
+          cp -R ../index.html www/
+          
+          # Configurazione Icona
+          if [ -f "../icon.png" ]; then
+            cp ../icon.png www/icon.png
+            sed -i '' '/<\/widget>/i\
+            <icon src="www/icon.png" />' config.xml
+          fi
+
+      - name: Build iOS App
+        run: |
+          cd app
+          cordova build ios --no-sign
+
+      - name: Package IPA
+        run: |
+          cd app/platforms/ios/build/emulator
+          mkdir Payload
+          mv ZombieEscape.app Payload/
+          zip -r ZombieEscape.ipa Payload
+
+      - name: Upload IPA Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ZombieEscape-IPA
+          path: app/platforms/ios/build/emulator/ZombieEscape.ipa
