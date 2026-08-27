@@ -6,6 +6,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <title>Zombie Escape GPS</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
@@ -212,9 +213,65 @@
       box-shadow: 0 0 15px #00FF66; color: #000; font-weight: 900; font-size: 15px;
       display: flex; align-items: center; justify-content: center; flex-shrink: 0;
     }
+
+    /* SPLASH SCREEN */
+    #splash-screen {
+      position: fixed; inset: 0; z-index: 999999;
+      background: #0d0d0d;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 16px;
+      transition: opacity 0.5s ease;
+    }
+    #splash-screen.fade-out { opacity: 0; pointer-events: none; }
+    .splash-logo {
+      width: 84px; height: 84px; border-radius: 50%;
+      background: #00FF66; box-shadow: 0 0 40px rgba(0,255,102,0.6);
+      display: flex; align-items: center; justify-content: center;
+      color: #000; font-size: 40px; font-weight: 900;
+      animation: splashPulse 1.2s infinite ease-in-out;
+    }
+    @keyframes splashPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.08); }
+    }
+    .splash-title { color: #00FF66; font-size: 22px; font-weight: 900; letter-spacing: 1px; }
+    .splash-subtitle { color: #666; font-size: 12px; }
+
+    /* AVVISO ZONA PERICOLOSA */
+    #danger-warning {
+      position: fixed; inset: 0; z-index: 120; pointer-events: none;
+      opacity: 0; transition: opacity 0.3s ease;
+    }
+    #danger-warning.active {
+      opacity: 1;
+      animation: dangerPulse 1s infinite;
+    }
+    @keyframes dangerPulse {
+      0%, 100% { box-shadow: inset 0 0 60px 20px rgba(255,0,0,0.35); }
+      50% { box-shadow: inset 0 0 110px 40px rgba(255,0,0,0.6); }
+    }
+    .danger-warning-banner {
+      position: absolute; top: 70px; left: 50%; transform: translateX(-50%);
+      background: rgba(120,0,0,0.9); border: 2px solid #ff4757; color: #fff;
+      padding: 8px 16px; border-radius: 10px; font-weight: 900; font-size: 12px;
+      text-align: center; white-space: nowrap;
+    }
+
+    /* CLASSIFICA PUNTEGGI */
+    .leaderboard-item { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #ccc; padding: 6px 0; border-bottom: 1px solid #222; }
+    .leaderboard-item:last-child { border-bottom: none; }
+    .leaderboard-rank { color: #00FF66; font-weight: 900; width: 30px; }
+    .leaderboard-score { font-weight: bold; color: #fff; }
+    .leaderboard-meta { color: #888; font-size: 10px; }
   </style>
 </head>
 <body>
+
+  <div id="splash-screen">
+    <div class="splash-logo">Z</div>
+    <div class="splash-title">ZOMBIE ESCAPE</div>
+    <div class="splash-subtitle">Caricamento mappa e GPS...</div>
+  </div>
 
   <!-- START MENU -->
   <div id="start-menu" class="menu-screen">
@@ -245,10 +302,16 @@
 
     <button class="main-btn" onclick="goToSetup()">PLAY</button>
 
+    <div class="section-label">🏆 TOP SCORES</div>
+    <div id="leaderboard-list" class="legend-box" style="gap:8px;">
+      <div style="font-size: 12px; color: #666; text-align: center;">Nessun punteggio ancora.</div>
+    </div>
+
     <div class="section-label">COMPLETED RUNS</div>
     <div id="history-list" class="history-container">
       <div style="font-size: 12px; color: #666; text-align: center;">No runs completed yet.</div>
     </div>
+    <button class="main-btn" style="background:#1a1a1a; color:#00FF66; border:2px solid #00FF66; box-shadow:none; font-size:13px; padding:10px;" onclick="exportHistory()">📤 ESPORTA CRONOLOGIA</button>
   </div>
 
   <!-- SETUP MENU -->
@@ -332,6 +395,12 @@
     </div>
   </div>
 
+  <div id="danger-warning">
+    <div class="danger-warning-banner">⚠️ ZONA PERICOLOSA — STAI PERDENDO VITA</div>
+  </div>
+
+  <div id="result-screen" class="menu-screen" style="display:none; justify-content:center; align-items:center; text-align:center; gap:12px;"></div>
+
   <div id="map"></div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -355,6 +424,8 @@
 
     let lastGPSPos = null;
     let lastGPSTime = null;
+    let lastDangerDamageTime = 0;
+    let splashHidden = false;
 
     let config = { diff: 'EASY', exits: 1, lives: 3, count: 6 };
     
@@ -402,6 +473,12 @@
       }
     }
 
+    function triggerHitVibration() {
+      if (navigator.vibrate) {
+        try { navigator.vibrate(200); } catch(e) {}
+      }
+    }
+
     function getZombieSpeed(type) {
       let baseSpeed = 0.000005; 
       if (type === 'runner') return baseSpeed * 1.5; 
@@ -420,34 +497,62 @@
       return R * c;
     }
 
+    function hideSplash() {
+      if (splashHidden) return;
+      splashHidden = true;
+      const el = document.getElementById('splash-screen');
+      if (el) {
+        el.classList.add('fade-out');
+        setTimeout(() => el.remove(), 500);
+      }
+    }
+
     function initApp() {
       playerPos = [41.9028, 12.4964];
       map = L.map('map', { zoomControl: false, attributionControl: false }).setView(playerPos, 15);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+      const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+      tileLayer.on('load', hideSplash);
+      setTimeout(hideSplash, 2500); // sicurezza: nasconde comunque lo splash dopo 2.5s
 
       const playerIcon = L.divIcon({ className: 'player-icon', html: '', iconSize: [20, 20], iconAnchor: [10, 10] });
       playerMarker = L.marker(playerPos, { icon: playerIcon }).addTo(map);
 
       renderHistory();
+      renderLeaderboard();
 
       if (navigator.geolocation) {
         navigator.geolocation.watchPosition(
           (pos) => {
             let now = Date.now();
             let newPos = [pos.coords.latitude, pos.coords.longitude];
+            let accuracy = pos.coords.accuracy || 15; // precisione del GPS in metri
 
             let calculatedSpeed = 0;
+            let readingIsReliable = false;
+
             if (pos.coords.speed !== null && pos.coords.speed !== undefined && !isNaN(pos.coords.speed) && pos.coords.speed >= 0) {
               calculatedSpeed = Math.round(pos.coords.speed * 3.6);
+              readingIsReliable = true;
             } else if (lastGPSPos && lastGPSTime) {
               let distMeters = getDistanceMeters(lastGPSPos[0], lastGPSPos[1], newPos[0], newPos[1]);
               let timeSec = (now - lastGPSTime) / 1000;
-              if (timeSec > 0 && distMeters > 0.5) {
+              // Ignora letture troppo ravvicinate o spostamenti minori della precisione del GPS:
+              // sono rumore, non movimento vero (es. da fermo il GPS "balla" di qualche metro)
+              if (timeSec >= 1 && distMeters > accuracy) {
                 calculatedSpeed = Math.round((distMeters / timeSec) * 3.6);
+                readingIsReliable = true;
               }
             }
 
-            if (calculatedSpeed > maxSpeedReached) maxSpeedReached = calculatedSpeed;
+            // Nessun essere umano corre a piedi oltre ~35 km/h: se esce un numero
+            // simile è quasi certamente un errore del GPS, non velocità reale
+            const MAX_PLAUSIBLE_SPEED = 35;
+            if (calculatedSpeed > MAX_PLAUSIBLE_SPEED) {
+              calculatedSpeed = 0;
+              readingIsReliable = false;
+            }
+
+            if (readingIsReliable && calculatedSpeed > maxSpeedReached) maxSpeedReached = calculatedSpeed;
 
             lastGPSPos = newPos;
             lastGPSTime = now;
@@ -607,6 +712,7 @@
       initAudio();
       gameStarted = true;
       startPos = [...playerPos];
+      lastDangerDamageTime = 0;
       lives = config.lives;
       maxLives = config.lives;
       decoyCount = 2;
@@ -640,8 +746,10 @@
         wave++;
         document.getElementById('wave-txt').innerText = `WAVE ${wave}`;
         spawnZombie('walker');
-        if(wave % 2 === 0) spawnZombie('runner');
-        if(wave % 3 === 0) spawnZombie('tank');
+        // Curva di difficolta' piu' graduale: i runner arrivano dalla wave 3,
+        // i tank (i piu' pericolosi) solo dalla wave 5 in poi
+        if (wave >= 3 && wave % 2 === 0) spawnZombie('runner');
+        if (wave >= 5 && wave % 3 === 0) spawnZombie('tank');
       }, 30000);
 
       crateInterval = setInterval(() => {
@@ -675,14 +783,26 @@
         if (d <= sz.radius) inSafeZone = true;
       });
 
+      let inDangerZone = false;
       dangerZones.forEach(dz => {
         let d = getDistanceMeters(playerPos[0], playerPos[1], dz.pos[0], dz.pos[1]);
-        if (d <= dz.radius && Math.random() < 0.05) {
+        if (d <= dz.radius) inDangerZone = true;
+      });
+
+      const dangerWarningEl = document.getElementById('danger-warning');
+      if (inDangerZone && !inSafeZone) {
+        dangerWarningEl.classList.add('active');
+        let now = Date.now();
+        if (now - lastDangerDamageTime >= 2000) {
+          lastDangerDamageTime = now;
           lives -= 1;
           playSoundEffect('hit');
+          triggerHitVibration();
           updateLivesUI();
         }
-      });
+      } else {
+        dangerWarningEl.classList.remove('active');
+      }
 
       let targetPos = activeDecoy ? activeDecoy.pos : playerPos;
 
@@ -706,6 +826,7 @@
         if (distToPlayer < 10 && !inSafeZone) {
           lives -= z.damage;
           playSoundEffect('hit');
+          triggerHitVibration();
           updateLivesUI();
           let angle = Math.random() * Math.PI * 2;
           let offsetLat = (100 / 111000) * Math.sin(angle);
@@ -739,8 +860,7 @@
           clearInterval(radarInterval);
           playSoundEffect('win');
           saveRunHistory(true);
-          alert(`YOU ESCAPED!\nSuccessful Run!\nFinal Score: ${score}`);
-          location.reload();
+          showResultScreen(true, score);
         }
       });
 
@@ -777,8 +897,7 @@
         clearInterval(crateInterval);
         clearInterval(radarInterval);
         saveRunHistory(false);
-        alert(`GAME OVER!\nFinal Score: ${score}`);
-        location.reload();
+        showResultScreen(false, score);
       }
     }
 
@@ -796,6 +915,79 @@
       };
       history.unshift(newRun);
       localStorage.setItem('zombie_escape_history', JSON.stringify(history.slice(0, 10)));
+      saveLeaderboard(score, config.diff);
+    }
+
+    function saveLeaderboard(finalScore, mode) {
+      let board = JSON.parse(localStorage.getItem('zombie_escape_leaderboard') || '[]');
+      board.push({ score: finalScore, mode: mode, date: new Date().toLocaleDateString() });
+      board.sort((a, b) => b.score - a.score);
+      board = board.slice(0, 10);
+      localStorage.setItem('zombie_escape_leaderboard', JSON.stringify(board));
+    }
+
+    function renderLeaderboard() {
+      let board = JSON.parse(localStorage.getItem('zombie_escape_leaderboard') || '[]');
+      let container = document.getElementById('leaderboard-list');
+      if (!container) return;
+      if (board.length === 0) {
+        container.innerHTML = '<div style="font-size: 12px; color: #666; text-align: center;">Nessun punteggio ancora.</div>';
+        return;
+      }
+      container.innerHTML = board.map((entry, i) => `
+        <div class="leaderboard-item">
+          <span class="leaderboard-rank">#${i + 1}</span>
+          <span class="leaderboard-score">${entry.score} pt</span>
+          <span class="leaderboard-meta">${entry.mode} · ${entry.date}</span>
+        </div>
+      `).join('');
+    }
+
+    function exportHistory() {
+      let history = localStorage.getItem('zombie_escape_history') || '[]';
+      let blob = new Blob([history], { type: 'application/json' });
+      let url = URL.createObjectURL(blob);
+      let a = document.createElement('a');
+      a.href = url;
+      a.download = 'zombie_escape_history.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function showResultScreen(victory, finalScore) {
+      const el = document.getElementById('result-screen');
+      const min = String(Math.floor(timeSurvived / 60)).padStart(2, '0');
+      const sec = String(timeSurvived % 60).padStart(2, '0');
+      el.innerHTML = `
+        <div class="title" style="color:${victory ? '#00FF66' : '#ff4757'};">${victory ? 'SEI SCAPPATO!' : 'GAME OVER'}</div>
+        <div class="subtitle">Tempo: ${min}:${sec} — Punteggio: ${finalScore}</div>
+        <button class="main-btn" onclick="shareResult(${victory}, ${finalScore})">📤 CONDIVIDI RISULTATO</button>
+        <button class="main-btn" style="background:#1a1a1a; color:#00FF66; border:2px solid #00FF66; box-shadow:none;" onclick="location.reload()">GIOCA ANCORA</button>
+      `;
+      el.style.display = 'flex';
+    }
+
+    function shareResult(victory, finalScore) {
+      const min = String(Math.floor(timeSurvived / 60)).padStart(2, '0');
+      const sec = String(timeSurvived % 60).padStart(2, '0');
+      const text = victory
+        ? `Sono scappato dagli zombie in ${min}:${sec} con ${finalScore} punti! Provaci anche tu 🧟`
+        : `Ho resistito ${min}:${sec} prima di essere preso dagli zombie, punteggio ${finalScore}. Riesci a fare meglio? 🧟`;
+      const url = 'https://itzchrii.github.io/ZombieEscape/';
+
+      if (navigator.share) {
+        navigator.share({ title: 'Zombie Escape', text: text, url: url }).catch(() => {});
+      } else if (navigator.clipboard) {
+        navigator.clipboard.writeText(`${text} ${url}`).then(() => {
+          alert('Risultato copiato negli appunti!');
+        }).catch(() => {
+          alert(text + ' ' + url);
+        });
+      } else {
+        alert(text + ' ' + url);
+      }
     }
 
     function renderHistory() {
