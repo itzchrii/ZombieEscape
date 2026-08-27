@@ -27,14 +27,12 @@ jobs:
           rm -rf www/*
           cp -R ../index.html www/
           
-          # Gestione Icona
           if [ -f "../icon.png" ]; then
             cp ../icon.png www/icon.png
             sed -i '' '/<\/widget>/i\
             <icon src="www/icon.png" />' config.xml
           fi
 
-          # Autorizzazione GPS per iOS
           sed -i '' '/<\/widget>/i\
           <edit-config file="*-Info.plist" mode="merge" target="NSLocationWhenInUseUsageDescription">\
             <string>Zombie Escape richiede il GPS per tracciare la tua posizione durante la partita.</string>\
