@@ -6,7 +6,10 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Zombie Escape">
+  <meta name="theme-color" content="#00FF66">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="manifest" href="manifest.json">
   <title>Zombie Escape GPS</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
@@ -263,6 +266,23 @@
     .leaderboard-rank { color: #00FF66; font-weight: 900; width: 30px; }
     .leaderboard-score { font-weight: bold; color: #fff; }
     .leaderboard-meta { color: #888; font-size: 10px; }
+
+    /* TOP BAR ICONE (impostazioni / tutorial) */
+    .top-icon-btn {
+      position: absolute; top: 20px; z-index: 5;
+      background: #1a1a1a; border: 1px solid #333; color: #00FF66;
+      width: 40px; height: 40px; border-radius: 10px; font-size: 18px;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* TOGGLE IMPOSTAZIONI */
+    .setting-row { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+    .setting-toggle {
+      flex: none; padding: 6px 16px; font-size: 12px;
+    }
+
+    /* PAUSA / RISULTATO CENTRATI */
+    #pause-screen .title, #result-screen .title { font-size: 26px; }
   </style>
 </head>
 <body>
@@ -275,6 +295,9 @@
 
   <!-- START MENU -->
   <div id="start-menu" class="menu-screen">
+    <button class="top-icon-btn" style="right: 20px;" onclick="openSettings()">⚙️</button>
+    <button class="top-icon-btn" style="right: 68px;" onclick="showTutorial()">❓</button>
+
     <div class="title">ZOMBIE ESCAPE</div>
     <div class="subtitle">Real-Time GPS Survival (Local Town Edition)</div>
 
@@ -302,6 +325,9 @@
 
     <button class="main-btn" onclick="goToSetup()">PLAY</button>
 
+    <div class="section-label">🏅 TRAGUARDI</div>
+    <div id="achievements-list" class="legend-box" style="gap:10px;"></div>
+
     <div class="section-label">🏆 TOP SCORES</div>
     <div id="leaderboard-list" class="legend-box" style="gap:8px;">
       <div style="font-size: 12px; color: #666; text-align: center;">Nessun punteggio ancora.</div>
@@ -314,6 +340,34 @@
     <button class="main-btn" style="background:#1a1a1a; color:#00FF66; border:2px solid #00FF66; box-shadow:none; font-size:13px; padding:10px;" onclick="exportHistory()">📤 ESPORTA CRONOLOGIA</button>
   </div>
 
+  <!-- TUTORIAL -->
+  <div id="tutorial-menu" class="menu-screen" style="display: none; justify-content: center;">
+    <div id="tutorial-slide-container"></div>
+  </div>
+
+  <!-- IMPOSTAZIONI -->
+  <div id="settings-menu" class="menu-screen" style="display: none;">
+    <div class="title">IMPOSTAZIONI</div>
+    <div class="subtitle">Personalizza la tua esperienza</div>
+
+    <div class="legend-box" style="gap:16px;">
+      <div class="legend-item setting-row" onclick="toggleSetting('sound')">
+        <div><strong>🔊 Suoni</strong></div>
+        <div id="setting-sound-btn" class="opt-btn active setting-toggle">ON</div>
+      </div>
+      <div class="legend-item setting-row" onclick="toggleSetting('vibration')">
+        <div><strong>📳 Vibrazione</strong></div>
+        <div id="setting-vibration-btn" class="opt-btn active setting-toggle">ON</div>
+      </div>
+      <div class="legend-item setting-row" onclick="toggleSetting('showDevPanel')">
+        <div><strong>🎮 Pannello Test (D-pad)</strong></div>
+        <div id="setting-devpanel-btn" class="opt-btn active setting-toggle">ON</div>
+      </div>
+    </div>
+
+    <button class="main-btn" onclick="closeSettings()">CHIUDI</button>
+  </div>
+
   <!-- SETUP MENU -->
   <div id="setup-menu" class="menu-screen" style="display: none;">
     <div class="title">CONFIGURATION</div>
@@ -321,33 +375,41 @@
 
     <div id="gps-status-2" class="gps-status-banner">Searching GPS Signal...</div>
 
-    <div class="section-label">1. Difficulty & Exit Distance</div>
+    <div class="section-label">1. Modalità di Gioco</div>
     <div class="opt-grid">
-      <div class="opt-btn active" onclick="selectOpt(this, 'diff', 'EASY')">SHORT<br><small>(250m)</small></div>
-      <div class="opt-btn" onclick="selectOpt(this, 'diff', 'MEDIUM')">TOWN<br><small>(500m)</small></div>
-      <div class="opt-btn" onclick="selectOpt(this, 'diff', 'HARDCORE')">BORDER<br><small>(800m)</small></div>
+      <div class="opt-btn active" onclick="selectOpt(this, 'mode', 'ESCAPE')">ESCAPE<br><small>Trova l'uscita</small></div>
+      <div class="opt-btn" onclick="selectOpt(this, 'mode', 'SURVIVAL')">SURVIVAL<br><small>Resisti il più possibile</small></div>
     </div>
 
-    <div class="section-label">2. Exits Count</div>
-    <div class="opt-grid">
-      <div class="opt-btn active" onclick="selectOpt(this, 'exits', 1)">1 EXIT</div>
-      <div class="opt-btn" onclick="selectOpt(this, 'exits', 2)">2 EXITS</div>
+    <div id="escape-only-settings">
+      <div class="section-label">2. Difficulty & Exit Distance</div>
+      <div class="opt-grid">
+        <div class="opt-btn active" onclick="selectOpt(this, 'diff', 'EASY')">SHORT<br><small>(250m)</small></div>
+        <div class="opt-btn" onclick="selectOpt(this, 'diff', 'MEDIUM')">TOWN<br><small>(500m)</small></div>
+        <div class="opt-btn" onclick="selectOpt(this, 'diff', 'HARDCORE')">BORDER<br><small>(800m)</small></div>
+      </div>
+
+      <div class="section-label">3. Exits Count</div>
+      <div class="opt-grid">
+        <div class="opt-btn active" onclick="selectOpt(this, 'exits', 1)">1 EXIT</div>
+        <div class="opt-btn" onclick="selectOpt(this, 'exits', 2)">2 EXITS</div>
+      </div>
     </div>
 
-    <div class="section-label">3. Initial Lives</div>
+    <div class="section-label">4. Initial Lives</div>
     <div class="opt-grid">
       <div class="opt-btn" onclick="selectOpt(this, 'lives', 1)">1 LIFE</div>
       <div class="opt-btn active" onclick="selectOpt(this, 'lives', 3)">3 LIVES</div>
     </div>
 
-    <div class="section-label">4. Initial Zombies</div>
+    <div class="section-label">5. Initial Zombies</div>
     <div class="opt-grid">
       <div class="opt-btn" onclick="selectOpt(this, 'count', 3)">FEW (3)</div>
       <div class="opt-btn active" onclick="selectOpt(this, 'count', 6)">NORMAL (6)</div>
       <div class="opt-btn" onclick="selectOpt(this, 'count', 10)">HORDE (10)</div>
     </div>
 
-    <button class="main-btn" onclick="launchGame()">START ESCAPE</button>
+    <button class="main-btn" onclick="launchGame()">START</button>
   </div>
 
   <!-- GAME HUD -->
@@ -401,6 +463,12 @@
 
   <div id="result-screen" class="menu-screen" style="display:none; justify-content:center; align-items:center; text-align:center; gap:12px;"></div>
 
+  <div id="pause-screen" class="menu-screen" style="display:none; justify-content:center; align-items:center; text-align:center; gap:16px;">
+    <div class="title" style="color:#ffa502;">⏸ IN PAUSA</div>
+    <div class="subtitle">Il gioco si è fermato perché hai lasciato l'app</div>
+    <button class="main-btn" onclick="resumeGame()">RIPRENDI</button>
+  </div>
+
   <div id="map"></div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -426,8 +494,13 @@
     let lastGPSTime = null;
     let lastDangerDamageTime = 0;
     let splashHidden = false;
+    let isPaused = false;
+    let cratesCollectedThisRun = 0;
+    let tutorialIndex = 0;
 
-    let config = { diff: 'EASY', exits: 1, lives: 3, count: 6 };
+    let settings = { sound: true, vibration: true, showDevPanel: true };
+
+    let config = { mode: 'ESCAPE', diff: 'EASY', exits: 1, lives: 3, count: 6 };
     
     // DISTANZE PRECISE: 250m, 500m, 800m
     const exitDistances = { EASY: 250, MEDIUM: 500, HARDCORE: 800 };
@@ -442,7 +515,7 @@
     }
 
     function playBeep(freq, duration) {
-      if (!audioCtx) return;
+      if (!audioCtx || !settings.sound) return;
       try {
         let osc = audioCtx.createOscillator();
         let gain = audioCtx.createGain();
@@ -474,6 +547,7 @@
     }
 
     function triggerHitVibration() {
+      if (!settings.vibration) return;
       if (navigator.vibrate) {
         try { navigator.vibrate(200); } catch(e) {}
       }
@@ -519,6 +593,13 @@
 
       renderHistory();
       renderLeaderboard();
+      renderAchievements();
+      loadSettings();
+      applySettings();
+
+      if (!localStorage.getItem('zombie_escape_tutorial_seen')) {
+        showTutorial();
+      }
 
       if (navigator.geolocation) {
         navigator.geolocation.watchPosition(
@@ -571,7 +652,6 @@
 
             if (gameStarted) {
               document.getElementById('speed-val').innerText = calculatedSpeed;
-              document.getElementById('dev-panel').style.display = 'none';
             }
           },
           (err) => {
@@ -593,6 +673,11 @@
       config[category] = value;
       btn.parentElement.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
+
+      if (category === 'mode') {
+        const escapeSettings = document.getElementById('escape-only-settings');
+        escapeSettings.style.display = value === 'ESCAPE' ? 'block' : 'none';
+      }
     }
 
     function spawnZombie(type) {
@@ -703,6 +788,55 @@
       }, 10000);
     }
 
+    function timerTick() {
+      if (isGameOver) return;
+      timeSurvived++;
+      let min = String(Math.floor(timeSurvived / 60)).padStart(2, '0');
+      let sec = String(timeSurvived % 60).padStart(2, '0');
+      document.getElementById('timer').innerText = `${min}:${sec}`;
+      score += wave * 5;
+      document.getElementById('score').innerText = `SCORE: ${score}`;
+    }
+
+    function waveTick() {
+      if (isGameOver) return;
+      wave++;
+      document.getElementById('wave-txt').innerText = `WAVE ${wave}`;
+      spawnZombie('walker');
+      // Curva di difficolta' piu' graduale: i runner arrivano dalla wave 3,
+      // i tank (i piu' pericolosi) solo dalla wave 5 in poi
+      if (wave >= 3 && wave % 2 === 0) spawnZombie('runner');
+      if (wave >= 5 && wave % 3 === 0) spawnZombie('tank');
+    }
+
+    function crateTick() {
+      if (isGameOver) return;
+      spawnCrate();
+    }
+
+    function radarTick() {
+      if (isGameOver) return;
+      let closestZombie = 9999;
+      zombies.forEach(z => {
+        let d = getDistanceMeters(playerPos[0], playerPos[1], z.pos[0], z.pos[1]);
+        if (d < closestZombie) closestZombie = d;
+      });
+
+      if (closestZombie < 30) {
+        playBeep(700, 0.05);
+      } else if (closestZombie < 60) {
+        playBeep(450, 0.05);
+      }
+    }
+
+    function startGameIntervals() {
+      gameLoopInterval = setInterval(updateGameLoop, 200);
+      timerInterval = setInterval(timerTick, 1000);
+      waveInterval = setInterval(waveTick, 30000);
+      crateInterval = setInterval(crateTick, 35000);
+      radarInterval = setInterval(radarTick, 1200);
+    }
+
     function launchGame() {
       if (!gpsAcquired) {
         alert("Wait for GPS lock before starting!");
@@ -713,6 +847,7 @@
       gameStarted = true;
       startPos = [...playerPos];
       lastDangerDamageTime = 0;
+      cratesCollectedThisRun = 0;
       lives = config.lives;
       maxLives = config.lives;
       decoyCount = 2;
@@ -724,54 +859,18 @@
       map.invalidateSize();
       map.setView(playerPos, 16);
 
-      setupExits();
+      if (config.mode === 'ESCAPE') {
+        setupExits();
+      } else {
+        document.getElementById('tracker-container').innerHTML =
+          '<div class="tracker-item" style="color:#ffa502;">∞ SURVIVAL MODE</div>';
+      }
       setupEnvironmentZones();
       for(let i = 0; i < config.count; i++) spawnZombie('walker');
       spawnCrate();
 
-      gameLoopInterval = setInterval(updateGameLoop, 200);
-
-      timerInterval = setInterval(() => {
-        if(isGameOver) return;
-        timeSurvived++;
-        let min = String(Math.floor(timeSurvived / 60)).padStart(2, '0');
-        let sec = String(timeSurvived % 60).padStart(2, '0');
-        document.getElementById('timer').innerText = `${min}:${sec}`;
-        score += wave * 5;
-        document.getElementById('score').innerText = `SCORE: ${score}`;
-      }, 1000);
-
-      waveInterval = setInterval(() => {
-        if(isGameOver) return;
-        wave++;
-        document.getElementById('wave-txt').innerText = `WAVE ${wave}`;
-        spawnZombie('walker');
-        // Curva di difficolta' piu' graduale: i runner arrivano dalla wave 3,
-        // i tank (i piu' pericolosi) solo dalla wave 5 in poi
-        if (wave >= 3 && wave % 2 === 0) spawnZombie('runner');
-        if (wave >= 5 && wave % 3 === 0) spawnZombie('tank');
-      }, 30000);
-
-      crateInterval = setInterval(() => {
-        if(isGameOver) return;
-        spawnCrate();
-      }, 35000);
-
-      // RADAR AUDIO
-      radarInterval = setInterval(() => {
-        if (isGameOver) return;
-        let closestZombie = 9999;
-        zombies.forEach(z => {
-          let d = getDistanceMeters(playerPos[0], playerPos[1], z.pos[0], z.pos[1]);
-          if (d < closestZombie) closestZombie = d;
-        });
-
-        if (closestZombie < 30) {
-          playBeep(700, 0.05);
-        } else if (closestZombie < 60) {
-          playBeep(450, 0.05);
-        }
-      }, 1200);
+      applySettings();
+      startGameIntervals();
     }
 
     function updateGameLoop() {
@@ -860,7 +959,15 @@
           clearInterval(radarInterval);
           playSoundEffect('win');
           saveRunHistory(true);
-          showResultScreen(true, score);
+          let unlockedNow = checkAchievements({
+            victory: true,
+            zombiesSpawned: totalZombiesSpawned,
+            maxSpeed: maxSpeedReached,
+            timeSurvived: timeSurvived,
+            waveReached: wave,
+            cratesCollected: cratesCollectedThisRun
+          });
+          showResultScreen(true, score, unlockedNow);
         }
       });
 
@@ -871,6 +978,7 @@
           crates.splice(index, 1);
           if (lives < maxLives) lives++;
           score += 200;
+          cratesCollectedThisRun++;
           playSoundEffect('pickup');
           updateLivesUI();
         }
@@ -897,17 +1005,26 @@
         clearInterval(crateInterval);
         clearInterval(radarInterval);
         saveRunHistory(false);
-        showResultScreen(false, score);
+        let unlockedNow = checkAchievements({
+          victory: false,
+          zombiesSpawned: totalZombiesSpawned,
+          maxSpeed: maxSpeedReached,
+          timeSurvived: timeSurvived,
+          waveReached: wave,
+          cratesCollected: cratesCollectedThisRun
+        });
+        showResultScreen(false, score, unlockedNow);
       }
     }
 
     function saveRunHistory(victory) {
+      let modeLabel = config.mode === 'SURVIVAL' ? 'SURVIVAL' : config.diff;
       let history = JSON.parse(localStorage.getItem('zombie_escape_history') || '[]');
       let newRun = {
         id: Date.now(),
         date: new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
         victory: victory,
-        mode: config.diff,
+        mode: modeLabel,
         startPos: startPos,
         endPos: [...playerPos],
         maxSpeed: maxSpeedReached,
@@ -915,7 +1032,7 @@
       };
       history.unshift(newRun);
       localStorage.setItem('zombie_escape_history', JSON.stringify(history.slice(0, 10)));
-      saveLeaderboard(score, config.diff);
+      saveLeaderboard(score, modeLabel);
     }
 
     function saveLeaderboard(finalScore, mode) {
@@ -956,13 +1073,25 @@
       URL.revokeObjectURL(url);
     }
 
-    function showResultScreen(victory, finalScore) {
+    function showResultScreen(victory, finalScore, newlyUnlocked = []) {
       const el = document.getElementById('result-screen');
       const min = String(Math.floor(timeSurvived / 60)).padStart(2, '0');
       const sec = String(timeSurvived % 60).padStart(2, '0');
+      const achievementsHTML = newlyUnlocked.length > 0 ? `
+        <div style="margin-top:4px; width:100%;">
+          <div class="section-label" style="color:#ffd32a; text-align:center;">🏅 NUOVI TRAGUARDI</div>
+          ${newlyUnlocked.map(a => `
+            <div style="background:#1a1a1a; border:1px solid #ffd32a; border-radius:8px; padding:8px 12px; margin-bottom:6px; text-align:left;">
+              <strong style="color:#ffd32a;">${a.name}</strong><br>
+              <span style="font-size:11px; color:#aaa;">${a.desc}</span>
+            </div>
+          `).join('')}
+        </div>
+      ` : '';
       el.innerHTML = `
         <div class="title" style="color:${victory ? '#00FF66' : '#ff4757'};">${victory ? 'SEI SCAPPATO!' : 'GAME OVER'}</div>
         <div class="subtitle">Tempo: ${min}:${sec} — Punteggio: ${finalScore}</div>
+        ${achievementsHTML}
         <button class="main-btn" onclick="shareResult(${victory}, ${finalScore})">📤 CONDIVIDI RISULTATO</button>
         <button class="main-btn" style="background:#1a1a1a; color:#00FF66; border:2px solid #00FF66; box-shadow:none;" onclick="location.reload()">GIOCA ANCORA</button>
       `;
@@ -988,6 +1117,164 @@
       } else {
         alert(text + ' ' + url);
       }
+    }
+
+    // ============ ACHIEVEMENT ============
+    const ACHIEVEMENTS = [
+      { id: 'prima_fuga', name: 'Prima Fuga', desc: 'Completa la tua prima fuga riuscita', check: (r) => r.victory },
+      { id: 'sopravvissuto_20', name: 'Sopravvissuto', desc: 'Affronta 20 zombie in una sola corsa', check: (r) => r.zombiesSpawned >= 20 },
+      { id: 'velocista', name: 'Velocista', desc: 'Raggiungi 12 km/h reali durante una corsa', check: (r) => r.maxSpeed >= 12 },
+      { id: 'maratoneta', name: 'Maratoneta', desc: 'Sopravvivi almeno 5 minuti in una corsa', check: (r) => r.timeSurvived >= 300 },
+      { id: 'ondata_10', name: 'Ondata 10', desc: 'Raggiungi la wave 10', check: (r) => r.waveReached >= 10 },
+      { id: 'raccoglitore', name: 'Raccoglitore', desc: 'Raccogli 5 casse in una sola corsa', check: (r) => r.cratesCollected >= 5 },
+    ];
+
+    function checkAchievements(runStats) {
+      let unlocked = JSON.parse(localStorage.getItem('zombie_escape_achievements') || '[]');
+      let newlyUnlocked = [];
+      ACHIEVEMENTS.forEach(a => {
+        if (!unlocked.includes(a.id) && a.check(runStats)) {
+          unlocked.push(a.id);
+          newlyUnlocked.push(a);
+        }
+      });
+      if (newlyUnlocked.length > 0) {
+        localStorage.setItem('zombie_escape_achievements', JSON.stringify(unlocked));
+        renderAchievements();
+      }
+      return newlyUnlocked;
+    }
+
+    function renderAchievements() {
+      let unlocked = JSON.parse(localStorage.getItem('zombie_escape_achievements') || '[]');
+      let container = document.getElementById('achievements-list');
+      if (!container) return;
+      container.innerHTML = ACHIEVEMENTS.map(a => {
+        let isUnlocked = unlocked.includes(a.id);
+        return `
+          <div class="legend-item" style="opacity:${isUnlocked ? '1' : '0.35'};">
+            <div style="width:22px; text-align:center; font-size:16px;">${isUnlocked ? '🏅' : '🔒'}</div>
+            <div><strong>${a.name}:</strong> ${a.desc}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // ============ IMPOSTAZIONI ============
+    function loadSettings() {
+      let saved = JSON.parse(localStorage.getItem('zombie_escape_settings') || 'null');
+      if (saved) settings = Object.assign(settings, saved);
+      renderSettingsUI();
+    }
+
+    function saveSettings() {
+      localStorage.setItem('zombie_escape_settings', JSON.stringify(settings));
+    }
+
+    function toggleSetting(key) {
+      settings[key] = !settings[key];
+      saveSettings();
+      renderSettingsUI();
+      applySettings();
+    }
+
+    function applySettings() {
+      const devPanel = document.getElementById('dev-panel');
+      if (devPanel) devPanel.style.display = settings.showDevPanel ? 'grid' : 'none';
+    }
+
+    function renderSettingsUI() {
+      const map = { sound: 'setting-sound-btn', vibration: 'setting-vibration-btn', showDevPanel: 'setting-devpanel-btn' };
+      Object.keys(map).forEach(key => {
+        const el = document.getElementById(map[key]);
+        if (el) {
+          el.classList.toggle('active', settings[key]);
+          el.innerText = settings[key] ? 'ON' : 'OFF';
+        }
+      });
+    }
+
+    function openSettings() {
+      document.getElementById('start-menu').style.display = 'none';
+      document.getElementById('settings-menu').style.display = 'flex';
+      renderSettingsUI();
+    }
+
+    function closeSettings() {
+      document.getElementById('settings-menu').style.display = 'none';
+      document.getElementById('start-menu').style.display = 'flex';
+    }
+
+    // ============ TUTORIAL ============
+    const TUTORIAL_SLIDES = [
+      { emoji: '🧟', title: 'Benvenuto in Zombie Escape', text: "Un gioco di sopravvivenza che usa il tuo GPS reale. Cammina davvero nel mondo per muoverti nel gioco!" },
+      { emoji: '📍', title: "Trova l'uscita", text: "In modalità Escape, una o due uscite (E) appaiono a distanza fissa da te. Raggiungile per vincere. In modalità Survival, invece, non ci sono uscite: resisti il più a lungo possibile." },
+      { emoji: '🏃', title: 'Scappa dagli zombie', text: 'Walker, Runner e Tank ti inseguono. Se ti toccano perdi vite. Le zone rosse sul terreno fanno danno nel tempo, quelle blu ti proteggono.' },
+      { emoji: '💨', title: 'Usa i tuoi strumenti', text: 'Le casse gialle ti curano e danno punti, i decoy distraggono gli zombie per qualche secondo. Buona fortuna, sopravvissuto!' }
+    ];
+
+    function showTutorial() {
+      tutorialIndex = 0;
+      document.getElementById('start-menu').style.display = 'none';
+      document.getElementById('tutorial-menu').style.display = 'flex';
+      renderTutorialSlide();
+    }
+
+    function renderTutorialSlide() {
+      const slide = TUTORIAL_SLIDES[tutorialIndex];
+      const isLast = tutorialIndex === TUTORIAL_SLIDES.length - 1;
+      document.getElementById('tutorial-slide-container').innerHTML = `
+        <div style="text-align:center;">
+          <div style="font-size:64px; margin-bottom:16px;">${slide.emoji}</div>
+          <div class="title" style="font-size:22px;">${slide.title}</div>
+          <div class="subtitle" style="font-size:14px; margin:16px 0 28px; line-height:1.5;">${slide.text}</div>
+          <div style="display:flex; justify-content:center; gap:6px; margin-bottom:24px;">
+            ${TUTORIAL_SLIDES.map((_, i) => `<div style="width:8px; height:8px; border-radius:50%; background:${i === tutorialIndex ? '#00FF66' : '#333'};"></div>`).join('')}
+          </div>
+          <button class="main-btn" onclick="nextTutorialSlide()">${isLast ? 'INIZIA A GIOCARE' : 'AVANTI'}</button>
+          ${!isLast ? `<button class="main-btn" style="background:#1a1a1a; color:#888; border:2px solid #333; box-shadow:none;" onclick="closeTutorial()">SALTA</button>` : ''}
+        </div>
+      `;
+    }
+
+    function nextTutorialSlide() {
+      if (tutorialIndex < TUTORIAL_SLIDES.length - 1) {
+        tutorialIndex++;
+        renderTutorialSlide();
+      } else {
+        closeTutorial();
+      }
+    }
+
+    function closeTutorial() {
+      localStorage.setItem('zombie_escape_tutorial_seen', 'true');
+      document.getElementById('tutorial-menu').style.display = 'none';
+      document.getElementById('start-menu').style.display = 'flex';
+    }
+
+    // ============ PAUSA (Page Visibility API) ============
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && gameStarted && !isGameOver) {
+        pauseGame();
+      }
+    });
+
+    function pauseGame() {
+      if (isPaused || isGameOver) return;
+      isPaused = true;
+      clearInterval(gameLoopInterval);
+      clearInterval(timerInterval);
+      clearInterval(waveInterval);
+      clearInterval(crateInterval);
+      clearInterval(radarInterval);
+      document.getElementById('pause-screen').style.display = 'flex';
+    }
+
+    function resumeGame() {
+      if (!isPaused) return;
+      isPaused = false;
+      document.getElementById('pause-screen').style.display = 'none';
+      startGameIntervals();
     }
 
     function renderHistory() {
