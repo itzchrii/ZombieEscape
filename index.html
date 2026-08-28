@@ -197,12 +197,6 @@
 
     .leaflet-marker-icon { overflow: visible !important; }
     .player-icon { width: 20px; height: 20px; background: #00FF66; border: 3px solid #fff; border-radius: 50%; box-shadow: 0 0 14px #00FF66; }
-    .player-icon-warning { width: 20px; height: 20px; background: #ffa502; border: 3px solid #fff; border-radius: 50%; box-shadow: 0 0 14px #ffa502; }
-    .player-icon-danger { width: 20px; height: 20px; background: #ff4757; border: 3px solid #fff; border-radius: 50%; animation: dangerIconPulse 0.6s infinite alternate; }
-    @keyframes dangerIconPulse {
-      from { box-shadow: 0 0 10px 2px rgba(255, 71, 87, 0.6); }
-      to   { box-shadow: 0 0 22px 8px rgba(255, 71, 87, 1); }
-    }
     .start-icon { width: 14px; height: 14px; background: #00a8ff; border: 2px solid #fff; border-radius: 50%; }
     .end-icon { width: 14px; height: 14px; background: #44bd32; border: 2px solid #fff; border-radius: 50%; }
 
@@ -1067,22 +1061,10 @@
       }
     }
 
-    function updatePlayerIconState() {
-      if (!playerMarker || lives <= 0) return;
-      let ratio = maxLives > 0 ? lives / maxLives : 1;
-      let cls = 'player-icon';
-      if (ratio <= 0.34) cls = 'player-icon-danger';
-      else if (ratio <= 0.67) cls = 'player-icon-warning';
-
-      const icon = L.divIcon({ className: cls, html: '', iconSize: [20, 20], iconAnchor: [10, 10] });
-      playerMarker.setIcon(icon);
-    }
-
     function updateLivesUI() {
       let hearts = '';
       for (let i = 0; i < lives; i++) hearts += '♥';
       document.getElementById('lives-display').innerText = hearts || 'DEAD';
-      updatePlayerIconState();
       if (lives <= 0 && !isGameOver) {
         isGameOver = true;
         clearInterval(gameLoopInterval);
