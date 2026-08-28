@@ -192,8 +192,6 @@
     }
     .decoy-btn:disabled { opacity: 0.4; border-color: #555; color: #555; box-shadow: none; }
 
-    .dev-controls { position: absolute; bottom: 85px; left: 50%; transform: translateX(-50%); z-index: 110; display: grid; grid-template-columns: repeat(3, 42px); gap: 4px; background: rgba(0,0,0,0.9); padding: 6px; border-radius: 10px; pointer-events: auto; }
-    .dev-btn { background: #222; color: #00FF66; border: 1px solid #00FF66; width: 42px; height: 42px; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; }
 
     .leaflet-marker-icon { overflow: visible !important; }
     .player-icon { width: 20px; height: 20px; background: #00FF66; border: 3px solid #fff; border-radius: 50%; box-shadow: 0 0 14px #00FF66; }
@@ -374,10 +372,6 @@
         <div><strong>📳 Vibrazione</strong></div>
         <div id="setting-vibration-btn" class="opt-btn active setting-toggle">ON</div>
       </div>
-      <div class="legend-item setting-row" onclick="toggleSetting('showDevPanel')">
-        <div><strong>🎮 Pannello Test (D-pad)</strong></div>
-        <div id="setting-devpanel-btn" class="opt-btn active setting-toggle">ON</div>
-      </div>
     </div>
 
     <button class="main-btn" onclick="closeSettings()">CHIUDI</button>
@@ -447,13 +441,6 @@
       <button id="decoy-btn-ui" class="decoy-btn" onclick="deployDecoy()">💨 DECOY (<span id="decoy-count">2</span>)</button>
     </div>
 
-    <div class="dev-controls" id="dev-panel">
-      <div></div><button class="dev-btn" onclick="moveSim(0.0003, 0)">▲</button><div></div>
-      <button class="dev-btn" onclick="moveSim(0, -0.0003)">◄</button>
-      <button class="dev-btn" onclick="moveSim(-0.0003, 0)">▼</button>
-      <button class="dev-btn" onclick="moveSim(0, 0.0003)">►</button>
-    </div>
-
     <div class="hud-bottom">
       <div class="metric-card">
         <div id="threat-dist" class="metric-value" style="color:#ff4757;">--</div>
@@ -503,7 +490,6 @@
     let gameLoopInterval, waveInterval, crateInterval, timerInterval, radarInterval;
     let isGameOver = false;
     let gameStarted = false;
-    let speedTimeout;
 
     let lastGPSPos = null;
     let lastGPSTime = null;
@@ -523,7 +509,7 @@
     let replayTrajectory = null;
     let heatmapMapInstance = null;
 
-    let settings = { sound: true, vibration: true, showDevPanel: true };
+    let settings = { sound: true, vibration: true };
 
     let config = { mode: 'ESCAPE', diff: 'EASY', exits: 1, lives: 3, count: 6 };
     
@@ -1258,12 +1244,11 @@
     }
 
     function applySettings() {
-      const devPanel = document.getElementById('dev-panel');
-      if (devPanel) devPanel.style.display = settings.showDevPanel ? 'grid' : 'none';
+      // Impostazioni audio/vibrazione applicate direttamente dalle funzioni che le usano
     }
 
     function renderSettingsUI() {
-      const map = { sound: 'setting-sound-btn', vibration: 'setting-vibration-btn', showDevPanel: 'setting-devpanel-btn' };
+      const map = { sound: 'setting-sound-btn', vibration: 'setting-vibration-btn' };
       Object.keys(map).forEach(key => {
         const el = document.getElementById(map[key]);
         if (el) {
@@ -1396,24 +1381,6 @@
           hMap.fitBounds(bounds, { padding: [20, 20] });
         }, 100);
       });
-    }
-
-    function moveSim(lat, lng) {
-      if(isGameOver) return;
-
-      playerPos[0] += lat;
-      playerPos[1] += lng;
-      playerMarker.setLatLng(playerPos);
-      map.panTo(playerPos);
-
-      let simSpeed = 25;
-      if (simSpeed > maxSpeedReached) maxSpeedReached = simSpeed;
-      document.getElementById('speed-val').innerText = simSpeed;
-
-      clearTimeout(speedTimeout);
-      speedTimeout = setTimeout(() => {
-        document.getElementById('speed-val').innerText = "0";
-      }, 1000);
     }
 
     // ============ REPLAY ============
