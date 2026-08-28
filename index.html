@@ -198,8 +198,11 @@
     .leaflet-marker-icon { overflow: visible !important; }
     .player-icon { width: 20px; height: 20px; background: #00FF66; border: 3px solid #fff; border-radius: 50%; box-shadow: 0 0 14px #00FF66; }
     .player-icon-warning { width: 20px; height: 20px; background: #ffa502; border: 3px solid #fff; border-radius: 50%; box-shadow: 0 0 14px #ffa502; }
-    .player-icon-danger { width: 20px; height: 20px; background: #ff4757; border: 3px solid #fff; border-radius: 50%; box-shadow: 0 0 14px #ff4757; animation: dangerIconPulse 0.6s infinite alternate; }
-    @keyframes dangerIconPulse { from { transform: scale(1); } to { transform: scale(1.3); } }
+    .player-icon-danger { width: 20px; height: 20px; background: #ff4757; border: 3px solid #fff; border-radius: 50%; animation: dangerIconPulse 0.6s infinite alternate; }
+    @keyframes dangerIconPulse {
+      from { box-shadow: 0 0 10px 2px rgba(255, 71, 87, 0.6); }
+      to   { box-shadow: 0 0 22px 8px rgba(255, 71, 87, 1); }
+    }
     .start-icon { width: 14px; height: 14px; background: #00a8ff; border: 2px solid #fff; border-radius: 50%; }
     .end-icon { width: 14px; height: 14px; background: #44bd32; border: 2px solid #fff; border-radius: 50%; }
 
