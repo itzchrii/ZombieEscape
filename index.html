@@ -197,6 +197,9 @@
 
     .leaflet-marker-icon { overflow: visible !important; }
     .player-icon { width: 20px; height: 20px; background: #00FF66; border: 3px solid #fff; border-radius: 50%; box-shadow: 0 0 14px #00FF66; }
+    .player-icon-warning { width: 20px; height: 20px; background: #ffa502; border: 3px solid #fff; border-radius: 50%; box-shadow: 0 0 14px #ffa502; }
+    .player-icon-danger { width: 20px; height: 20px; background: #ff4757; border: 3px solid #fff; border-radius: 50%; box-shadow: 0 0 14px #ff4757; animation: dangerIconPulse 0.6s infinite alternate; }
+    @keyframes dangerIconPulse { from { transform: scale(1); } to { transform: scale(1.3); } }
     .start-icon { width: 14px; height: 14px; background: #00a8ff; border: 2px solid #fff; border-radius: 50%; }
     .end-icon { width: 14px; height: 14px; background: #44bd32; border: 2px solid #fff; border-radius: 50%; }
 
@@ -333,11 +336,26 @@
       <div style="font-size: 12px; color: #666; text-align: center;">Nessun punteggio ancora.</div>
     </div>
 
+    <div class="section-label">📍 HEATMAP COLPI SUBITI</div>
+    <div id="heatmap-container" class="history-map" style="height:180px; margin-bottom:20px; overflow:hidden;"></div>
+
     <div class="section-label">COMPLETED RUNS</div>
     <div id="history-list" class="history-container">
       <div style="font-size: 12px; color: #666; text-align: center;">No runs completed yet.</div>
     </div>
     <button class="main-btn" style="background:#1a1a1a; color:#00FF66; border:2px solid #00FF66; box-shadow:none; font-size:13px; padding:10px;" onclick="exportHistory()">📤 ESPORTA CRONOLOGIA</button>
+  </div>
+
+  <!-- REPLAY -->
+  <div id="replay-screen" class="menu-screen" style="display: none; flex-direction: column; padding: 0; overflow: hidden;">
+    <div style="display:flex; justify-content:space-between; align-items:center; padding:16px 20px; background:rgba(13,13,13,0.95); z-index:2; flex-shrink:0;">
+      <div>
+        <div class="title" style="font-size:18px; text-align:left; margin-bottom:2px;">REPLAY</div>
+        <div id="replay-time" style="font-size:12px; color:#00FF66;">00:00</div>
+      </div>
+      <button class="top-icon-btn" style="position:static;" onclick="closeReplay()">✕</button>
+    </div>
+    <div id="replay-map" style="flex:1; width:100%;"></div>
   </div>
 
   <!-- TUTORIAL -->
@@ -497,6 +515,16 @@
     let isPaused = false;
     let cratesCollectedThisRun = 0;
     let tutorialIndex = 0;
+    let runTrajectory = [];
+    let wakeLock = null;
+
+    let replayMap = null;
+    let replayPlayerMarker = null;
+    let replayZombieMarkers = [];
+    let replayInterval = null;
+    let replayFrameIndex = 0;
+    let replayTrajectory = null;
+    let heatmapMapInstance = null;
 
     let settings = { sound: true, vibration: true, showDevPanel: true };
 
@@ -594,6 +622,7 @@
       renderHistory();
       renderLeaderboard();
       renderAchievements();
+      renderHeatmap();
       loadSettings();
       applySettings();
 
@@ -796,6 +825,25 @@
       document.getElementById('timer').innerText = `${min}:${sec}`;
       score += wave * 5;
       document.getElementById('score').innerText = `SCORE: ${score}`;
+      if (timeSurvived % 2 === 0) recordTrajectorySnapshot();
+    }
+
+    function recordTrajectorySnapshot() {
+      runTrajectory.push({
+        t: timeSurvived,
+        p: [Math.round(playerPos[0] * 1e6) / 1e6, Math.round(playerPos[1] * 1e6) / 1e6],
+        z: zombies.slice(0, 15).map(z => [Math.round(z.pos[0] * 1e6) / 1e6, Math.round(z.pos[1] * 1e6) / 1e6])
+      });
+    }
+
+    function downsampleTrajectory(traj, maxPoints) {
+      if (traj.length <= maxPoints) return traj;
+      const step = traj.length / maxPoints;
+      const result = [];
+      for (let i = 0; i < maxPoints; i++) {
+        result.push(traj[Math.floor(i * step)]);
+      }
+      return result;
     }
 
     function waveTick() {
@@ -837,6 +885,25 @@
       radarInterval = setInterval(radarTick, 1200);
     }
 
+    async function requestWakeLock() {
+      try {
+        if ('wakeLock' in navigator) {
+          wakeLock = await navigator.wakeLock.request('screen');
+          wakeLock.addEventListener('release', () => { wakeLock = null; });
+        }
+      } catch (err) {
+        // Se il wake lock non è supportato o viene negato, il gioco funziona comunque:
+        // semplicemente lo schermo potrebbe spegnersi da solo dopo un po'
+      }
+    }
+
+    function releaseWakeLock() {
+      if (wakeLock) {
+        wakeLock.release().catch(() => {});
+        wakeLock = null;
+      }
+    }
+
     function launchGame() {
       if (!gpsAcquired) {
         alert("Wait for GPS lock before starting!");
@@ -848,6 +915,8 @@
       startPos = [...playerPos];
       lastDangerDamageTime = 0;
       cratesCollectedThisRun = 0;
+      runTrajectory = [];
+      requestWakeLock();
       lives = config.lives;
       maxLives = config.lives;
       decoyCount = 2;
@@ -897,6 +966,7 @@
           lives -= 1;
           playSoundEffect('hit');
           triggerHitVibration();
+          recordHitLocation();
           updateLivesUI();
         }
       } else {
@@ -926,6 +996,7 @@
           lives -= z.damage;
           playSoundEffect('hit');
           triggerHitVibration();
+          recordHitLocation();
           updateLivesUI();
           let angle = Math.random() * Math.PI * 2;
           let offsetLat = (100 / 111000) * Math.sin(angle);
@@ -993,10 +1064,22 @@
       }
     }
 
+    function updatePlayerIconState() {
+      if (!playerMarker || lives <= 0) return;
+      let ratio = maxLives > 0 ? lives / maxLives : 1;
+      let cls = 'player-icon';
+      if (ratio <= 0.34) cls = 'player-icon-danger';
+      else if (ratio <= 0.67) cls = 'player-icon-warning';
+
+      const icon = L.divIcon({ className: cls, html: '', iconSize: [20, 20], iconAnchor: [10, 10] });
+      playerMarker.setIcon(icon);
+    }
+
     function updateLivesUI() {
       let hearts = '';
       for (let i = 0; i < lives; i++) hearts += '♥';
       document.getElementById('lives-display').innerText = hearts || 'DEAD';
+      updatePlayerIconState();
       if (lives <= 0 && !isGameOver) {
         isGameOver = true;
         clearInterval(gameLoopInterval);
@@ -1017,6 +1100,15 @@
       }
     }
 
+    function recordHitLocation() {
+      try {
+        let heat = JSON.parse(localStorage.getItem('zombie_escape_heatmap') || '[]');
+        heat.push([Math.round(playerPos[0] * 1e6) / 1e6, Math.round(playerPos[1] * 1e6) / 1e6]);
+        if (heat.length > 300) heat = heat.slice(heat.length - 300);
+        localStorage.setItem('zombie_escape_heatmap', JSON.stringify(heat));
+      } catch(e) {}
+    }
+
     function saveRunHistory(victory) {
       let modeLabel = config.mode === 'SURVIVAL' ? 'SURVIVAL' : config.diff;
       let history = JSON.parse(localStorage.getItem('zombie_escape_history') || '[]');
@@ -1028,7 +1120,8 @@
         startPos: startPos,
         endPos: [...playerPos],
         maxSpeed: maxSpeedReached,
-        zombiesSpawned: totalZombiesSpawned
+        zombiesSpawned: totalZombiesSpawned,
+        trajectory: downsampleTrajectory(runTrajectory, 200)
       };
       history.unshift(newRun);
       localStorage.setItem('zombie_escape_history', JSON.stringify(history.slice(0, 10)));
@@ -1074,6 +1167,7 @@
     }
 
     function showResultScreen(victory, finalScore, newlyUnlocked = []) {
+      releaseWakeLock();
       const el = document.getElementById('result-screen');
       const min = String(Math.floor(timeSurvived / 60)).padStart(2, '0');
       const sec = String(timeSurvived % 60).padStart(2, '0');
@@ -1256,6 +1350,8 @@
     document.addEventListener('visibilitychange', () => {
       if (document.hidden && gameStarted && !isGameOver) {
         pauseGame();
+      } else if (!document.hidden && gameStarted && !isGameOver) {
+        requestWakeLock();
       }
     });
 
@@ -1297,6 +1393,7 @@
             <div>MAX SPEED<strong>${run.maxSpeed} km/h</strong></div>
             <div>ZOMBIES<strong>${run.zombiesSpawned}</strong></div>
           </div>
+          ${run.trajectory && run.trajectory.length > 0 ? `<button class="main-btn" style="background:#1a1a1a; color:#00FF66; border:2px solid #00FF66; box-shadow:none; font-size:12px; padding:8px;" onclick="openReplay(${run.id})">▶ GUARDA REPLAY</button>` : ''}
         `;
         container.appendChild(card);
 
@@ -1332,6 +1429,112 @@
       speedTimeout = setTimeout(() => {
         document.getElementById('speed-val').innerText = "0";
       }, 1000);
+    }
+
+    // ============ REPLAY ============
+    function openReplay(runId) {
+      let history = JSON.parse(localStorage.getItem('zombie_escape_history') || '[]');
+      let run = history.find(r => r.id === runId);
+      if (!run || !run.trajectory || run.trajectory.length === 0) {
+        alert('Replay non disponibile per questa corsa.');
+        return;
+      }
+
+      clearInterval(replayInterval);
+      replayTrajectory = run.trajectory;
+      replayFrameIndex = 0;
+      replayZombieMarkers = [];
+
+      document.getElementById('start-menu').style.display = 'none';
+      document.getElementById('replay-screen').style.display = 'flex';
+
+      if (replayMap) { replayMap.remove(); replayMap = null; }
+
+      setTimeout(() => {
+        replayMap = L.map('replay-map', { zoomControl: false, attributionControl: false })
+          .setView(replayTrajectory[0].p, 16);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(replayMap);
+
+        const playerIcon = L.divIcon({ className: 'player-icon', html: '', iconSize: [20, 20], iconAnchor: [10, 10] });
+        replayPlayerMarker = L.marker(replayTrajectory[0].p, { icon: playerIcon }).addTo(replayMap);
+
+        startReplayPlayback();
+      }, 60);
+    }
+
+    function startReplayPlayback() {
+      replayInterval = setInterval(() => {
+        if (!replayTrajectory || replayFrameIndex >= replayTrajectory.length) {
+          clearInterval(replayInterval);
+          return;
+        }
+        const frame = replayTrajectory[replayFrameIndex];
+        replayPlayerMarker.setLatLng(frame.p);
+        replayMap.panTo(frame.p);
+
+        frame.z.forEach((zPos, i) => {
+          if (!replayZombieMarkers[i]) {
+            const zIcon = L.divIcon({ className: 'z-walker', html: '', iconSize: [16, 16], iconAnchor: [8, 8] });
+            replayZombieMarkers[i] = L.marker(zPos, { icon: zIcon }).addTo(replayMap);
+          } else {
+            replayZombieMarkers[i].setLatLng(zPos);
+          }
+        });
+        while (replayZombieMarkers.length > frame.z.length) {
+          let extra = replayZombieMarkers.pop();
+          replayMap.removeLayer(extra);
+        }
+
+        document.getElementById('replay-time').innerText = formatTime(frame.t);
+        replayFrameIndex++;
+      }, 150); // riproduzione accelerata: molto più veloce del tempo reale di gioco
+    }
+
+    function closeReplay() {
+      clearInterval(replayInterval);
+      document.getElementById('replay-screen').style.display = 'none';
+      document.getElementById('start-menu').style.display = 'flex';
+    }
+
+    function formatTime(t) {
+      let min = String(Math.floor(t / 60)).padStart(2, '0');
+      let sec = String(t % 60).padStart(2, '0');
+      return `${min}:${sec}`;
+    }
+
+    // ============ HEATMAP ============
+    function renderHeatmap() {
+      let heat = JSON.parse(localStorage.getItem('zombie_escape_heatmap') || '[]');
+      let container = document.getElementById('heatmap-container');
+      if (!container) return;
+
+      if (heat.length === 0) {
+        container.innerHTML = '<div style="display:flex; align-items:center; justify-content:center; height:100%; font-size:12px; color:#666;">Nessun colpo ancora registrato.</div>';
+        return;
+      }
+
+      container.innerHTML = '';
+
+      setTimeout(() => {
+        if (heatmapMapInstance) { heatmapMapInstance.remove(); heatmapMapInstance = null; }
+        heatmapMapInstance = L.map('heatmap-container', {
+          zoomControl: false, attributionControl: false,
+          dragging: true, touchZoom: true, scrollWheelZoom: false
+        });
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(heatmapMapInstance);
+
+        heat.forEach(([lat, lng]) => {
+          L.circle([lat, lng], {
+            radius: 20,
+            color: 'transparent',
+            fillColor: '#ff4757',
+            fillOpacity: 0.12
+          }).addTo(heatmapMapInstance);
+        });
+
+        let bounds = L.latLngBounds(heat);
+        heatmapMapInstance.fitBounds(bounds, { padding: [30, 30], maxZoom: 16 });
+      }, 100);
     }
 
     window.onload = initApp;
